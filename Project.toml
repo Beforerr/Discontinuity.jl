@@ -3,5 +3,8 @@ uuid = "b54b658d-ecbf-47cc-8c7f-673f5d2a4b30"
 authors = ["Beforerr <zzj956959688@gmail.com> and contributors"]
 version = "1.0.0-DEV"
 
+[deps]
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+
 [compat]
 julia = "1.10"

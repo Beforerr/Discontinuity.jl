@@ -1,5 +1,8 @@
 module Discontinuity
 
-# Write your package code here.
+using LaTeXStrings
+
+include("labs.jl")
+include("mapping.jl")
 
 end
