@@ -1,14 +1,17 @@
-using Arrow
-using DataFrames,
-    DataFramesMeta
 
-function keep_good_fit(df)
-    df = @chain df begin
-        filter(:"fit.stat.rsquared" => >(0.9), _)
-    end
+using FileIO
+
+
+"""
+    keep_good_fit!(df; rsquared=0.9)
+
+Keep only the rows with a fit statistic R² greater than the given value.
+"""
+function keep_good_fit!(df; rsquared=0.9)
+    @subset!(df, :"fit.stat.rsquared" .> rsquared)
 end
 
-function process(df)
+function process!(df::AbstractDataFrame)
     df = @chain df begin
         subset!(names(df) .=> ByRow(isfinite))
         transform!(names(df, Float32) .=> ByRow(Float64); renamecols=false) # Convert all columns of Float32 to Float64
@@ -26,7 +29,8 @@ function process(df)
             :"v.Alfven.change.l" = abs.(:"v.Alfven.change.l"),
             :"v.ion.change.l" = abs.(:"v.ion.change.l")
         )
-        @transform! :Λ_t = 1 .- (:"v.ion.change.l" ./ :"v.Alfven.change.l") .^ 2
+        @transform! :v_l_ratio = :"v.ion.change.l" ./ :"v.Alfven.change.l"
+        @transform! :Λ_t = 1 .- :v_l_ratio .^ 2
         unique!(["t.d_start", "t.d_end"])
     end
 
@@ -34,10 +38,15 @@ function process(df)
         @transform! df :"T.mean" = (:"T.before" .+ :"T.after") ./ 2
     end
 
-    df |> keep_good_fit
+    df |> keep_good_fit!
 end
 
-function load(path::String)
+"""
+    load(path)
+
+Load the data from the given path and process it.
+"""
+function load(path)
     df = path |> Arrow.Table |> DataFrame |> dropmissing
-    df |> process
+    df |> process!
 end
