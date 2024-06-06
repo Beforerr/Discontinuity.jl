@@ -19,11 +19,10 @@ function plot_dist(
 
     fig = Figure(; figure_kwargs...)
     axs = [fig[1, i] for i in 1:length(plts)]
-    fgs = [draw!(ax, p, axis=axis) for (ax, p) in zip(axs, plts)]
 
-    # hide extra y labels
-    hideylabels!(fgs)
-    add_labels!(axs)
-    pretty_legend!(fig, fgs[1])
+    map(axs, plts) do ax, p
+        draw!(ax, p, axis=axis)
+    end
+
     fig
 end
