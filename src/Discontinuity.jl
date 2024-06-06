@@ -4,7 +4,7 @@ using Arrow
 using DataFrames,
     DataFramesMeta
 using AlgebraOfGraphics,
-    CairoMakie
+    Makie
 using Beforerr
 using LaTeXStrings
 

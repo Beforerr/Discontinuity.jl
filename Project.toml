@@ -7,11 +7,11 @@ version = "1.0.0-DEV"
 AlgebraOfGraphics = "cbdf2221-f076-402e-a563-3d30da359d67"
 Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
 Beforerr = "49aed396-608e-4c3f-b6d6-a749216c9ea7"
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
 [compat]
 julia = "1.10"
