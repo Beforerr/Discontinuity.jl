@@ -1,15 +1,18 @@
 module Discontinuity
 
+using Arrow
+using DataFrames,
+    DataFramesMeta
 using AlgebraOfGraphics,
-    CairoMakie
-using AlgebraOfGraphics: density
-using beforerr
+    Makie
 using LaTeXStrings
 
+
+include("io.jl")
 include("mapping.jl")
 include("plot.jl")
-include("io.jl")
 
 export load
+export plot_dist
 
 end
