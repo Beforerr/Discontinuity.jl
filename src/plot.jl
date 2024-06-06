@@ -1,6 +1,7 @@
 log_tickformat = values -> [L"10^{%$(value)}" for value in values]
 # axis=(xtickformat = log_tickformat,)
 using AlgebraOfGraphics
+using AlgebraOfGraphics: density
 
 function hideylabels(la::Axis)
     la.ylabelvisible = false
