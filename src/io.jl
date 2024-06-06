@@ -1,6 +1,12 @@
 
 using FileIO
 
+
+"""
+    keep_good_fit!(df; rsquared=0.9)
+
+Keep only the rows with a fit statistic R² greater than the given value.
+"""
 function keep_good_fit!(df; rsquared=0.9)
     @subset!(df, :"fit.stat.rsquared" .> rsquared)
 end
@@ -35,7 +41,12 @@ function process!(df::AbstractDataFrame)
     df |> keep_good_fit!
 end
 
-function load(path; )
+"""
+    load(path)
+
+Load the data from the given path and process it.
+"""
+function load(path)
     df = path |> Arrow.Table |> DataFrame |> dropmissing
     df |> process!
 end
