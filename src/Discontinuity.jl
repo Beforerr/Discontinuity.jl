@@ -5,7 +5,7 @@ using DataFrames,
     DataFramesMeta
 using AlgebraOfGraphics,
     CairoMakie
-using beforerr
+using Beforerr
 using LaTeXStrings
 
 
