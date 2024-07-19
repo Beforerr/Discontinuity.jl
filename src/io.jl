@@ -13,8 +13,8 @@ end
 
 function process!(df::AbstractDataFrame)
     df = @chain df begin
-        subset!(names(df) .=> ByRow(isfinite))
         transform!(names(df, Float32) .=> ByRow(Float64); renamecols=false) # Convert all columns of Float32 to Float64
+        subset!(names(df, Float64) .=> ByRow(isfinite)) # Remove rows with NaN values
         @transform!(
             :"B.mean" = (:"B.before" .+ :"B.after") ./ 2,
             :"n.mean" = (:"n.before" .+ :"n.after") ./ 2,
@@ -30,6 +30,7 @@ function process!(df::AbstractDataFrame)
             :"v.ion.change.l" = abs.(:"v.ion.change.l")
         )
         @transform! :v_l_ratio = :"v.ion.change.l" ./ :"v.Alfven.change.l"
+        @transform! :v_l_fit_ratio = :"v.ion.change.l" ./ :"v.Alfven.change.l.fit"
         @transform! :Λ_t = 1 .- :v_l_ratio .^ 2
         unique!(["t.d_start", "t.d_end"])
     end

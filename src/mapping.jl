@@ -42,3 +42,11 @@ density_log_map = :"n.mean" => log10 => L"Log %$density_lab"
 
 v_Alfven_map = "v.Alfven.change.l" => L"\Delta V_{A,l}"
 v_ion_map = "v.ion.change.l" => L"\Delta V_{i,l}"
+v_l_ratio_map = "v_l_ratio" => L"\Delta V_{i,l} / \Delta V_{A,l}"
+
+baremodule DefaultMapping
+for m in (:B_map, :B_log_map, :density_map, :density_log_map, :v_Alfven_map, :v_ion_map, :v_l_ratio_map)
+    Core.eval(DefaultMapping, Expr(:import, Expr(:(.), :Discontinuity, m)))
+    Core.eval(DefaultMapping, Expr(:export, m))
+end
+end
