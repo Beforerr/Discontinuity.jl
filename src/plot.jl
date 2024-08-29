@@ -11,18 +11,21 @@ function plot_dist(
     maps=[l_log_map, l_norm_log_map, j_log_map, j_norm_log_map],
     axis=(yscale=log10,),
     datalimits=extrema,
-    figure_kwargs=(size=(1200, 300),)
+    figure_kwargs=(size=(1200, 300),),
+    visual=visual(Lines)
 )
 
-    plt = data_layer * density(datalimits=datalimits) * visual(Lines)
+    plt = data_layer * density(datalimits=datalimits)
+    plt = plt * visual
     plts = [plt * mapping(m) for m in maps]
 
     fig = Figure(; figure_kwargs...)
-    axs = [fig[1, i] for i in 1:length(plts)]
-
-    map(axs, plts) do ax, p
+    axs = [fig[i, j] for j in 1:size(maps, 2) for i in 1:size(maps, 1)]
+    grids = map(axs, plts) do ax, p
         draw!(ax, p, axis=axis)
     end
+    add_labels!(axs)
+    pretty_legend!(fig, grids[1])
 
     fig
 end

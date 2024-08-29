@@ -6,7 +6,7 @@ using DataFrames,
 using AlgebraOfGraphics,
     Makie
 using LaTeXStrings
-
+using Beforerr
 
 include("io.jl")
 include("mapping.jl")

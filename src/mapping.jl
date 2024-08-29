@@ -45,7 +45,15 @@ v_ion_map = "v.ion.change.l" => L"\Delta V_{i,l}"
 v_l_ratio_map = "v_l_ratio" => L"\Delta V_{i,l} / \Delta V_{A,l}"
 
 baremodule DefaultMapping
-for m in (:B_map, :B_log_map, :density_map, :density_log_map, :v_Alfven_map, :v_ion_map, :v_l_ratio_map)
+parameters_maps = [:di_map, :di_log_map, :jA_map, :jA_log_map]
+properties_maps = [
+    [:l_map, :l_log_map, :l_norm_map, :l_norm_log_map];
+    [:j_log_map, :j_log_map, :j_norm_map, :j_norm_log_map]
+]
+alvenicity_maps = [:B_map, :B_log_map, :density_map, :density_log_map, :v_Alfven_map, :v_ion_map, :v_l_ratio_map]
+
+all_maps = [parameters_maps; properties_maps; alvenicity_maps]
+for m in all_maps
     Core.eval(DefaultMapping, Expr(:import, Expr(:(.), :Discontinuity, m)))
     Core.eval(DefaultMapping, Expr(:export, m))
 end
