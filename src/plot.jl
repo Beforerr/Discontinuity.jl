@@ -8,7 +8,7 @@ Plot the density distribution of the thickness and current density (default) of 
 """
 function plot_dist(
     data_layer;
-    maps=[l_log_map, l_norm_log_map, j_log_map, j_norm_log_map],
+    maps=[l_log_map l_norm_log_map j_log_map j_norm_log_map],
     axis=(yscale=log10,),
     datalimits=extrema,
     figure_kwargs=(size=(1200, 300),),
