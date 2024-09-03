@@ -37,7 +37,7 @@ function compute_params!(df)
     if "T.before" in names(df)
         @transform! df :"T.mean" = (:"T.before" .+ :"T.after") ./ 2
     end
-
+    return df
 end
 
 function compute_Alfvenicity_params!(df)
@@ -53,6 +53,7 @@ function compute_Alfvenicity_params!(df)
     if "v.Alfven.change.l.fit" in names(df)
         @transform! df :v_l_fit_ratio = :"v.ion.change.l" ./ :"v.Alfven.change.l.fit"
     end
+    return df
 end
 
 process!(df::AbstractDataFrame) = df |> keep_good_fit! |> standardize_df! |> compute_params! |> compute_Alfvenicity_params!
