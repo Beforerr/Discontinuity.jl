@@ -48,7 +48,7 @@ baremodule DefaultMapping
 parameters_maps = [:di_map, :di_log_map, :jA_map, :jA_log_map]
 properties_maps = [
     [:l_map, :l_log_map, :l_norm_map, :l_norm_log_map];
-    [:j_log_map, :j_log_map, :j_norm_map, :j_norm_log_map]
+    [:j_map, :j_log_map, :j_norm_map, :j_norm_log_map]
 ]
 alvenicity_maps = [:B_map, :B_log_map, :density_map, :density_log_map, :v_Alfven_map, :v_ion_map, :v_l_ratio_map]
 

@@ -11,6 +11,7 @@ function plot_dist(
     maps=[l_log_map l_norm_log_map j_log_map j_norm_log_map],
     axis=(yscale=log10,),
     datalimits=extrema,
+    fig = missing,
     figure_kwargs=(size=(1200, 300),),
     visual=visual(Lines)
 )
@@ -19,7 +20,7 @@ function plot_dist(
     plt = plt * visual
     plts = [plt * mapping(m) for m in maps]
 
-    fig = Figure(; figure_kwargs...)
+    fig = ismissing(fig) ? Figure(; figure_kwargs...) : fig
     axs = [fig[i, j] for j in 1:size(maps, 2) for i in 1:size(maps, 1)]
     grids = map(axs, plts) do ax, p
         draw!(ax, p, axis=axis)
