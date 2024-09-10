@@ -50,7 +50,7 @@ properties_maps = [
     [:l_map, :l_log_map, :l_norm_map, :l_norm_log_map];
     [:j_map, :j_log_map, :j_norm_map, :j_norm_log_map]
 ]
-alvenicity_maps = [:B_map, :B_log_map, :density_map, :density_log_map, :v_Alfven_map, :v_ion_map, :v_l_ratio_map]
+alvenicity_maps = [:B_map, :b_log_map, :B_log_map, :density_map, :density_log_map, :v_Alfven_map, :v_ion_map, :v_l_ratio_map]
 
 all_maps = [parameters_maps; properties_maps; alvenicity_maps]
 for m in all_maps

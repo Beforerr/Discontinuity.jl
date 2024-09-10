@@ -8,9 +8,11 @@ using AlgebraOfGraphics,
 using LaTeXStrings
 using Beforerr
 
+include("naming.jl")
 include("io.jl")
 include("mapping.jl")
 include("plot.jl")
+include("formulary.jl")
 
 export load
 export plot_dist

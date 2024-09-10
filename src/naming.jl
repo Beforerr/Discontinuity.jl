@@ -1,0 +1,3 @@
+DEFAULT_B_COL = "B.mean"
+DEFAULT_N_COL = "n.mean"
+DEFAULT_T_COL = "T"
