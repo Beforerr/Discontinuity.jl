@@ -5,6 +5,7 @@ function standardize_df!(df)
     @chain df begin
         transform!(names(df, Float32) .=> ByRow(Float64); renamecols=false) # Convert all columns of Float32 to Float64
         subset!(names(df, Float64) .=> ByRow(isfinite)) # Remove rows with NaN values
+        unique!(["t.d_start", "t.d_end"]) # Remove duplicate rows
     end
 end
 
@@ -31,7 +32,6 @@ function compute_params!(df)
             :j0_k = abs.(:j0_k),
             :j0_k_norm = abs.(:j0_k_norm),
         )
-        unique!(["t.d_start", "t.d_end"])
     end
 
     if "T.before" in names(df)

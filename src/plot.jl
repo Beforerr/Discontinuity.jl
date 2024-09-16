@@ -30,3 +30,34 @@ function plot_dist(
 
     fig
 end
+
+function waiting_time(df; col=:time, δt = Dates.Minute(1))
+    time = df[:, col]
+    # unique and order the time
+    time = time |> unique |> sort
+    τ = diff(time)
+    return τ ./ δt
+end
+
+"""
+Plot the waiting time distribution of the data
+"""
+function plot_wt_pdf(τ; step = 5, xscale = identity)
+    binedges = 0:step:maximum(τ)
+
+    h = Hist1D(τ; binedges=binedges)
+    h = normalize(h)
+    d = fit(Exponential, τ)
+
+    x = bincenters(h)
+    y = pdf(d, x)
+
+    f = Figure()
+    ax = Axis(f[1, 1], yscale=log10, xscale=xscale, xlabel="τ (minutes)", ylabel="p(τ)")
+    errorbars!(ax, h; color=:black, whiskerwidth=6)
+    # plot the fit
+    lines!(ax, x, y, color = :red, linewidth = 2)
+    return f
+end
+
+plot_wt_pdf(df::AbstractDataFrame; kwargs...) = plot_wt_pdf(waiting_time(df); kwargs...)

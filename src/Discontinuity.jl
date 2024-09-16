@@ -7,6 +7,8 @@ using AlgebraOfGraphics,
     Makie
 using LaTeXStrings
 using Beforerr
+using Dates
+using Distributions, FHist
 
 include("naming.jl")
 include("io.jl")
@@ -15,6 +17,6 @@ include("plot.jl")
 include("formulary.jl")
 
 export load
-export plot_dist
+export plot_dist, plot_wt_pdf
 
 end
