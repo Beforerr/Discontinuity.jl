@@ -11,7 +11,7 @@ function plot_dist(
     maps=[l_log_map l_norm_log_map j_log_map j_norm_log_map],
     axis=(yscale=log10,),
     datalimits=extrema,
-    fig = missing,
+    fig=missing,
     figure_kwargs=(size=(1200, 300),),
     visual=visual(Lines)
 )
@@ -31,23 +31,31 @@ function plot_dist(
     fig
 end
 
-function waiting_time(df; col=:time, δt = Dates.Minute(1))
-    time = df[:, col]
+function waiting_time(time; δt=Dates.Minute(1))
     # unique and order the time
-    time = time |> unique |> sort
-    τ = diff(time)
+    τ = diff(time |> unique |> sort)
     return τ ./ δt
 end
+
+waiting_time(df::AbstractDataFrame; col=:time, kwargs...) = waiting_time(df[:, col])
+
+"""Use regex to remove content within curly braces including the braces"""
+format(d::Distribution) = replace(repr(d), r"\{[^}]+\}" => "")
 
 """
 Plot the waiting time distribution of the data
 """
-function plot_wt_pdf(τ; step = 5, xscale = identity)
+function plot_wt_pdf(
+    τ;
+    dist=Exponential,
+    step=5,
+    xscale=identity
+)
     binedges = 0:step:maximum(τ)
 
     h = Hist1D(τ; binedges=binedges)
     h = normalize(h)
-    d = fit(Exponential, τ)
+    d = fit(dist, τ)
 
     x = bincenters(h)
     y = pdf(d, x)
@@ -56,7 +64,11 @@ function plot_wt_pdf(τ; step = 5, xscale = identity)
     ax = Axis(f[1, 1], yscale=log10, xscale=xscale, xlabel="τ (minutes)", ylabel="p(τ)")
     errorbars!(ax, h; color=:black, whiskerwidth=6)
     # plot the fit
-    lines!(ax, x, y, color = :red, linewidth = 2)
+    lines!(ax, x, y, color=:red, linewidth=2, label=format(d))
+
+    # add the legend (fit parameters)
+    axislegend(ax, loc=:upperright)
+
     return f
 end
 

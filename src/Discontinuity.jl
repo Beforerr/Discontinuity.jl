@@ -18,5 +18,6 @@ include("formulary.jl")
 
 export load
 export plot_dist, plot_wt_pdf
+export waiting_time
 
 end
