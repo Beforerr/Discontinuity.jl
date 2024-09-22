@@ -3,33 +3,47 @@ log_tickformat = values -> [L"10^{%$(value)}" for value in values]
 using AlgebraOfGraphics
 using AlgebraOfGraphics: density
 
+FIGURE_KWARGS = (size=(1200, 300),)
+
 """
-Plot the density distribution of the thickness and current density (default) of the data layer.
+Plot the density distribution of the layer.
 """
-function plot_dist(
-    data_layer;
-    maps=[l_log_map l_norm_log_map j_log_map j_norm_log_map],
+function plot_dist!(
+    axs,
+    l::Layer,
+    maps;
     axis=(yscale=log10,),
     datalimits=extrema,
-    fig=missing,
-    figure_kwargs=(size=(1200, 300),),
     visual=visual(Lines)
 )
-
-    plt = data_layer * density(datalimits=datalimits)
+    plt = l * density(datalimits=datalimits)
     plt = plt * visual
     plts = [plt * mapping(m) for m in maps]
-
-    fig = ismissing(fig) ? Figure(; figure_kwargs...) : fig
-    axs = [fig[i, j] for j in 1:size(maps, 2) for i in 1:size(maps, 1)]
-    grids = map(axs, plts) do ax, p
+    return map(axs, plts) do ax, p
         draw!(ax, p, axis=axis)
     end
-    add_labels!(axs)
-    pretty_legend!(fig, grids[1])
-
-    fig
 end
+
+
+function plot_dist!(
+    f::Figure,
+    l::Layer,
+    maps;
+    add_labels = true,
+    kwargs...
+)
+    axs = [f[i, j] for j in 1:size(maps, 2) for i in 1:size(maps, 1)]
+    grids = plot_dist!(axs, l, maps; kwargs...)
+    add_labels || add_labels!(axs)
+    pretty_legend!(f, grids[1])
+    return f
+end
+
+"""backward compatibility"""
+plot_dist!(f::Figure,l::Layer; maps=[l_log_map l_norm_log_map j_log_map j_norm_log_map], kwargs...) = plot_dist!(f, l, maps; kwargs...)
+
+plot_dist!(l::Layer; kwargs...) = plot_dist!(current_figure(), l; kwargs...)
+plot_dist(l::Layer; figure=FIGURE_KWARGS, kwargs...) = plot_dist!(Figure(; figure...), l; kwargs...)
 
 function waiting_time(time; δt=Dates.Minute(1))
     # unique and order the time
