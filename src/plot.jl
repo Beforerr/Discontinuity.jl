@@ -1,7 +1,7 @@
 log_tickformat = values -> [L"10^{%$(value)}" for value in values]
 # axis=(xtickformat = log_tickformat,)
 using AlgebraOfGraphics
-using AlgebraOfGraphics: density
+using AlgebraOfGraphics: density, FigureGrid
 
 FIGURE_KWARGS = (size=(1200, 300),)
 
@@ -14,13 +14,14 @@ function plot_dist!(
     maps;
     axis=(yscale=log10,),
     datalimits=extrema,
-    visual=visual(Lines)
+    visual=visual(Lines),
+    draw_kwargs = Dict()
 )
     plt = l * density(datalimits=datalimits)
     plt = plt * visual
     plts = [plt * mapping(m) for m in maps]
     return map(axs, plts) do ax, p
-        draw!(ax, p, axis=axis)
+        draw!(ax, p; axis=axis, draw_kwargs...)
     end
 end
 
@@ -29,21 +30,22 @@ function plot_dist!(
     f::Figure,
     l::Layer,
     maps;
-    add_labels = true,
+    plotopts = PlotOpts(),
     kwargs...
 )
     axs = [f[i, j] for j in 1:size(maps, 2) for i in 1:size(maps, 1)]
     grids = plot_dist!(axs, l, maps; kwargs...)
-    add_labels || add_labels!(axs)
-    pretty_legend!(f, grids[1])
+    fg = FigureGrid(f, grids[1])
+    process_opts!(fg, axs, plotopts)
     return f
 end
 
-"""backward compatibility"""
-plot_dist!(f::Figure,l::Layer; maps=[l_log_map l_norm_log_map j_log_map j_norm_log_map], kwargs...) = plot_dist!(f, l, maps; kwargs...)
+plot_dist!(l::Layer, maps; kwargs...) = plot_dist!(current_figure(), l, maps; kwargs...)
 
-plot_dist!(l::Layer; kwargs...) = plot_dist!(current_figure(), l; kwargs...)
-plot_dist(l::Layer; figure=FIGURE_KWARGS, kwargs...) = plot_dist!(Figure(; figure...), l; kwargs...)
+plot_dist(l::Layer, maps; figure=FIGURE_KWARGS, kwargs...) = plot_dist!(Figure(; figure...), l, maps; kwargs...)
+
+"""backward compatibility"""
+plot_dist(l::Layer; maps=[l_log_map l_norm_log_map j_log_map j_norm_log_map], kwargs...) = plot_dist(l, maps; kwargs...)
 
 function waiting_time(time; δt=Dates.Minute(1))
     # unique and order the time
@@ -51,7 +53,7 @@ function waiting_time(time; δt=Dates.Minute(1))
     return τ ./ δt
 end
 
-waiting_time(df::AbstractDataFrame; col=:time, kwargs...) = waiting_time(df[:, col])
+waiting_time(df::AbstractDataFrame, col=:time; kwargs...) = waiting_time(df[:, col])
 
 """Use regex to remove content within curly braces including the braces"""
 format(d::Distribution) = replace(repr(d), r"\{[^}]+\}" => "")
