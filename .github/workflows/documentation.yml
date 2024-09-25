@@ -15,9 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
+      - uses: extractions/setup-just@v2
       - uses: julia-actions/cache@v2
       - name: Install dev dependencies
-        run: julia --project -e 'using Pkg; Beforerr = PackageSpec(url="https://github.com/Beforerr/beforerr.jl"); PlasmaFormulary = PackageSpec(url="https://github.com/Beforerr/PlasmaFormulary.jl")'
+        run: just install-dev-deps
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
       - name: Build and deploy

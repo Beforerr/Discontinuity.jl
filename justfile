@@ -1,9 +1,14 @@
 default:
     just --list
 
-install:
-   #!/usr/bin/env julia --project
-   using Pkg;
-   Pkg.develop(url="https://github.com/Beforerr/PlasmaFormulary.jl");
-   Pkg.develop(url="https://github.com/Beforerr/beforerr.jl");
-   Pkg.instantiate();
+install-dev-deps:
+    #!/usr/bin/env julia --project
+    using Pkg;
+    Beforerr = PackageSpec(url="https://github.com/Beforerr/beforerr.jl");
+    PlasmaFormulary = PackageSpec(url="https://github.com/Beforerr/PlasmaFormulary.jl");
+    Pkg.develop([Beforerr, PlasmaFormulary]);
+
+install: install-dev-deps
+    #!/usr/bin/env julia --project
+    using Pkg;
+    Pkg.instantiate();
