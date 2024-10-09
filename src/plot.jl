@@ -17,10 +17,9 @@ function plot_dist!(
     visual=visual(Lines),
     draw_kwargs = Dict()
 )
-    plt = l * density(datalimits=datalimits)
-    plt = plt * visual
-    plts = [plt * mapping(m) for m in maps]
-    return map(axs, plts) do ax, p
+    spec = l * density(datalimits=datalimits) * visual
+    return map(axs, maps) do ax, m
+        p = spec * mapping(Pair(m...))
         draw!(ax, p; axis=axis, draw_kwargs...)
     end
 end
@@ -42,10 +41,10 @@ end
 
 plot_dist!(l::Layer, maps; kwargs...) = plot_dist!(current_figure(), l, maps; kwargs...)
 
-plot_dist(l::Layer, maps; figure=FIGURE_KWARGS, kwargs...) = plot_dist!(Figure(; figure...), l, maps; kwargs...)
+plot_dist(l::Layer, maps; figure=(;), kwargs...) = plot_dist!(Figure(; figure...), l, maps; kwargs...)
 
 """backward compatibility"""
-plot_dist(l::Layer; maps=[l_log_map l_norm_log_map j_log_map j_norm_log_map], kwargs...) = plot_dist(l, maps; kwargs...)
+plot_dist(l::Layer; maps=[l_log_map l_norm_log_map j_log_map j_norm_log_map], kwargs...) = plot_dist(l, maps; figure=FIGURE_KWARGS, kwargs...)
 
 function waiting_time(time; δt=Dates.Minute(1))
     # unique and order the time

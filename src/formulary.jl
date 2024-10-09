@@ -27,7 +27,7 @@ function unitize!(
     df;
     Bcols=[DEFAULT_B_COL],
     ncols=[DEFAULT_N_COL],
-    Tcols=[],
+    Tcols=[DEFAULT_T_COL],
     B_unit=DEFAULT_B_UNIT,
     n_unit=DEFAULT_N_UNIT,
     T_unit=DEFAULT_T_UNIT,
