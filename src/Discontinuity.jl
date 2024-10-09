@@ -16,6 +16,7 @@ include("mapping.jl")
 include("plot.jl")
 include("formulary.jl")
 
+export DataSet
 export load
 export plot_dist, plot_wt_pdf
 export waiting_time
