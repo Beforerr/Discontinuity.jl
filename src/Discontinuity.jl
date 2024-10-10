@@ -1,6 +1,5 @@
 module Discontinuity
 
-using Arrow
 using DataFrames,
     DataFramesMeta
 using AlgebraOfGraphics,
@@ -10,6 +9,7 @@ using Beforerr
 using Dates
 using Distributions, FHist
 
+include("utils.jl")
 include("naming.jl")
 include("io.jl")
 include("mapping.jl")
@@ -17,7 +17,7 @@ include("plot.jl")
 include("formulary.jl")
 
 export DataSet
-export load
+export load, process!
 export plot_dist, plot_wt_pdf
 export waiting_time
 

@@ -1,4 +1,4 @@
-
+using Arrow
 using FileIO
 
 function standardize_df!(df)
@@ -9,17 +9,21 @@ function standardize_df!(df)
     end
 end
 
-process!(df::AbstractDataFrame) = df |> keep_good_fit! |> standardize_df! |> compute_params! |> compute_Alfvenicity_params!
+process!(df::AbstractDataFrame) = begin
+    df |> 
+    dropmissing |> 
+    keep_good_fit! |> 
+    standardize_df! |> 
+    compute_params! |> 
+    compute_Alfvenicity_params!
+end
 
 """
     load(path)
 
-Load the data from the given path and process it.
+Load the data from the given path
 """
-function load(path)
-    df = path |> Arrow.Table |> DataFrame |> dropmissing
-    df |> process!
-end
+load(path) = path |> Arrow.Table |> DataFrame
 
 @kwdef struct DataSet
     name = missing
@@ -36,6 +40,4 @@ function path(ds::DataSet)
     ismissing(ds.path) ? "$(prefix(ds))$(ds.ts)_$(ds.tau).arrow" : ds.path
 end
 
-function load(ds::DataSet)
-    df = (load ∘ path)(ds)
-end
+load(ds::DataSet) = (load ∘ path)(ds)
