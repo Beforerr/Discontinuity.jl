@@ -39,6 +39,7 @@ B_log_map = :"B.mean" => log10 => L"Log %$B_lab"
 density_map = :"n.mean" => density_lab
 density_log_map = :"n.mean" => log10 => L"Log %$density_lab"
 
+ω_in = :ω_in => "in-plane rotation angle (deg)"
 ω_map = :rotation_angle => "rotation angle (deg)"
 db_over_b_map = :db_over_b => L"|\Delta B|/\bar{B}"
 dB_over_B_map = :dB_over_B => L"\Delta B/\bar{B}"
@@ -54,7 +55,7 @@ parameters_maps = [:di_map, :di_log_map, :jA_map, :jA_log_map]
 properties_maps = [
     [:l_map, :l_log_map, :l_norm_map, :l_norm_log_map];
     [:j_map, :j_log_map, :j_norm_map, :j_norm_log_map];
-    [:ω_map, :db_over_b_map, :dB_over_B_map, :dB_norm_over_B_map]
+    [:ω_in, :ω_map, :db_over_b_map, :dB_over_B_map, :dB_norm_over_B_map]
 ]
 alvenicity_maps = [:B_map, :b_log_map, :B_log_map, :density_map, :density_log_map, :v_Alfven_map, :v_ion_map, :v_l_ratio_map]
 

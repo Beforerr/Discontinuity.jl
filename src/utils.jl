@@ -1,5 +1,3 @@
-using LinearAlgebra
-
 """
     keep_good_fit!(df; rsquared=0.9)
 
@@ -12,7 +10,8 @@ end
 function compute_params!(df)
     df = @chain df begin
         @rtransform!(
-            :dB_norm = norm([:dB_x, :dB_y, :dB_z])
+            :dB_norm = norm([:dB_x, :dB_y, :dB_z]),
+            :ω_in = rotation_angle_d(:"B.vec.before"[1:2], :"B.vec.after"[1:2]),
         )
         @transform!(
             :"B.mean" = (:"B.before" .+ :"B.after") ./ 2,

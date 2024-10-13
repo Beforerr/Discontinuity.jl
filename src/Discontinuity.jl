@@ -5,6 +5,7 @@ using DataFrames,
 using AlgebraOfGraphics,
     Makie
 using LaTeXStrings
+using LinearAlgebra
 using Beforerr
 using Dates
 using Distributions, FHist

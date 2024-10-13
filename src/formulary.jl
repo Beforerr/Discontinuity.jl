@@ -67,3 +67,16 @@ function calc_T!(df, V; kwargs...)
     df[!, :T] = PlasmaFormulary.thermal_temperature.(V, mass; kwargs...)
     return df
 end
+
+
+"""
+Cos rotation angle between two vectors.
+"""
+function cos_rotation_angle(v1, v2)
+    return v1 ⋅ v2 / (norm(v1) * norm(v2))
+end
+
+"""Rotation angle between two vectors in radians."""
+rotation_angle(v1, v2) = acos(cos_rotation_angle(v1, v2))
+"""Rotation angle between two vectors in degrees."""
+rotation_angle_d(v1, v2) = rad2deg(rotation_angle(v1, v2))
