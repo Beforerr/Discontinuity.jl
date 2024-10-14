@@ -1,11 +1,16 @@
 using Arrow
 using FileIO
 
+redundant_cols = [
+    ["B.vec.before.", "B.vec.after."] .* ["l" "m" "n"]
+] |> Iterators.flatten
+
 function standardize_df!(df)
     @chain df begin
         transform!(names(df, Float32) .=> ByRow(Float64); renamecols=false) # Convert all columns of Float32 to Float64
         subset!(names(df, Float64) .=> ByRow(isfinite)) # Remove rows with NaN values
         unique!(["t.d_start", "t.d_end"]) # Remove duplicate rows
+        select!(Not(redundant_cols)) # Remove additional columns
     end
 end
 
