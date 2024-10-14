@@ -39,8 +39,8 @@ B_log_map = :"B.mean" => log10 => L"Log %$B_lab"
 density_map = :"n.mean" => density_lab
 density_log_map = :"n.mean" => log10 => L"Log %$density_lab"
 
-ω_in = :ω_in => "in-plane rotation angle (deg)"
-ω_map = :rotation_angle => "rotation angle (deg)"
+ω_in = :ω_in => "in-plane rotation angle"
+ω_map = :rotation_angle => "rotation angle"
 db_over_b_map = :db_over_b => L"|\Delta B|/\bar{B}"
 dB_over_B_map = :dB_over_B => L"\Delta B/\bar{B}"
 
