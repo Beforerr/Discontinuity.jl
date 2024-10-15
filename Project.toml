@@ -20,10 +20,8 @@ PlasmaFormulary = "d26ff896-aba2-4e70-a0a6-448627456efe"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
-AlgebraOfGraphics = "0.6"
 Arrow = "2"
 DataFrames = "1"
-DataFramesMeta = "0.15"
 FileIO = "1"
 LaTeXStrings = "1"
 Unitful = "1"
