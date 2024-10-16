@@ -3,6 +3,7 @@ using Unitful: μ0, Units
 using PlasmaFormulary
 
 DEFAULT_B_UNIT = u"nT"
+DEFAULT_L_UNIT = u"km"
 DEFAULT_N_UNIT = u"cm^-3"
 DEFAULT_V_UNIT = u"km/s"
 DEFAULT_T_UNIT = u"eV"
@@ -28,15 +29,18 @@ function unitize!(
     Bcols=[DEFAULT_B_COL],
     ncols=[DEFAULT_N_COL],
     Tcols=[DEFAULT_T_COL],
+    Lcols=DEFAULT_L_COLS,
     B_unit=DEFAULT_B_UNIT,
     n_unit=DEFAULT_N_UNIT,
     T_unit=DEFAULT_T_UNIT,
+    L_unit=DEFAULT_L_UNIT,
 )
     transform!(
         df,
         Bcols .=> unitize(B_unit),
         ncols .=> unitize(n_unit),
-        Tcols .=> unitize(T_unit);
+        Tcols .=> unitize(T_unit),
+        Lcols .=> unitize(L_unit);
         renamecols=false
     )
 end
