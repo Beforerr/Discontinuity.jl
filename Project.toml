@@ -22,6 +22,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 [compat]
 Arrow = "2"
 DataFrames = "1"
+DataFramesMeta = "0.15"
 FileIO = "1"
 LaTeXStrings = "1"
 Unitful = "1"
