@@ -32,7 +32,7 @@ function plot_dist!(
     plotopts = PlotOpts(),
     kwargs...
 )
-    axs = [f[i, j] for j in 1:size(maps, 2) for i in 1:size(maps, 1)]
+    axs = [f[i, j] for i in 1:size(maps, 1) for j in 1:size(maps, 2)]
     grids = plot_dist!(axs, l, maps; kwargs...)
     fg = FigureGrid(f, grids[1])
     process_opts!(fg, axs, plotopts)
