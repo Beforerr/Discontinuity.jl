@@ -19,6 +19,9 @@ Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 PlasmaFormulary = "d26ff896-aba2-4e70-a0a6-448627456efe"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
+[sources]
+PlasmaFormulary = {url = "https://github.com/Beforerr/PlasmaFormulary.jl"}
+
 [compat]
 Arrow = "2"
 DataFrames = "1"
