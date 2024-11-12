@@ -13,6 +13,7 @@ using Distributions, FHist
 include("utils.jl")
 include("naming.jl")
 include("io.jl")
+include("processing.jl")
 include("mapping.jl")
 include("plot.jl")
 include("formulary.jl")

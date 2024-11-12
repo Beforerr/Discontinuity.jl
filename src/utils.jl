@@ -35,9 +35,13 @@ end
 
 function compute_Alfvenicity_params!(df)
     @chain df begin
+        @rtransform!(
+            :"v.ion.before.l" = sproj(:"v.ion.before", :e_min),
+            :"v.ion.after.l" = sproj(:"v.ion.after", :e_min)
+        )
         @transform!(
             :"v.Alfven.change.l" = abs.(:"v.Alfven.change.l"),
-            :"v.ion.change.l" = abs.(:"v.ion.change.l")
+            :"v.ion.change.l" = abs.(:"v.ion.before.l" .- :"v.ion.after.l")
         )
         @transform! :v_l_ratio = :"v.ion.change.l" ./ :"v.Alfven.change.l"
         @transform! :Λ_t = 1 .- :v_l_ratio .^ 2
