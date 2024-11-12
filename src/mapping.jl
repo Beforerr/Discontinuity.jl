@@ -19,9 +19,6 @@ density_lab = L"Density ($cm^{-3}$)"
 # Define the mappings
 di_map = :ion_inertial_length => di_lab
 di_log_map = :ion_inertial_length => log10 => L"Log %$di_lab"
-l_map = :L_k => l_lab
-l_norm_map = :L_k_norm => l_norm_lab
-l_log_map = :L_k => log10 => L"Log %$l_lab"
 
 jA_map = :j_Alfven => jA_lab
 jA_log_map = :j_Alfven => log10 => L"Log %$jA_lab"
@@ -37,27 +34,39 @@ v_Alfven_map = "v.Alfven.change.l" => L"\Delta V_{A,l}"
 v_ion_map = "v.ion.change.l" => L"\Delta V_{i,l}"
 v_l_ratio_map = "v_l_ratio" => L"\Delta V_{i,l} / \Delta V_{A,l}"
 
-var_mapping() = (;
-    dB_norm_over_B = ("dB_norm", "B.mean") => (/) => L"|\Delta \mathbf{B} |/B",
-    ω = :rotation_angle => "rotation angle",
-    ω_in = :ω_in => "in-plane rotation angle",
-    bn = :bn_over_b => abs => L"B_N/B",
-    
-    l_log = l_log_map,
-    l_norm_log = :L_k_norm => log10 => LaTeXString("Log $l_norm_lab"),
-    j_log = j_log_map,
-    j_norm_log = :j0_k_norm => log10 => LaTeXString("Log $j_norm_lab"),
+function var_mapping()
 
-    jA = :j_Alfven => jA_lab,
-    jA_log = :j_Alfven => log10 => L"Log %$jA_lab",
+    l_map = (;
+        l=:L_n_cross => l_lab,
+        l_log=:L_n_cross => log10 => L"Log %$l_lab",
+        l_norm=:L_n_cross_norm => l_norm_lab,
+        l_norm_log=:L_n_cross_norm => log10 => LaTeXString("Log $l_norm_lab"),
+    )
 
-    # Parameters
-    density = :"n.mean" => density_lab,
-    density_log = :"n.mean" => log10 => L"Log %$density_lab",
-    B = :"B.mean" => B_lab,
-    B_log = :"B.mean" => log10 => L"Log %$B_lab",
-    bm0_log = :"fit.vars.amplitude" => log10 ∘ abs => L"Log %$b_fit_lab",
-)
+    j_map = (;
+        j=:j0_k => j_lab,
+        j_log=:j0_k => log10 => L"Log %$j_lab",
+        j_norm=:j0_k_norm => j_norm_lab,
+        j_norm_log=:j0_k_norm => log10 => LaTeXString("Log $j_norm_lab"),
+    )
+
+    param_map = (;
+        dB_norm_over_B=("dB_norm", "B.mean") => (/) => L"|\Delta \mathbf{B} |/B",
+        ω=:rotation_angle => "rotation angle",
+        ω_in=:ω_in => "in-plane rotation angle",
+        bn=:bn_over_b => abs => L"B_N/B",
+        jA=:j_Alfven => jA_lab,
+        jA_log=:j_Alfven => log10 => L"Log %$jA_lab",
+
+        # Parameters
+        density=:"n.mean" => density_lab,
+        density_log=:"n.mean" => log10 => L"Log %$density_lab",
+        B=:"B.mean" => B_lab,
+        B_log=:"B.mean" => log10 => L"Log %$B_lab",
+        bm0_log=:"fit.vars.amplitude" => log10 ∘ abs => L"Log %$b_fit_lab",
+    )
+    return merge(l_map, j_map, param_map)
+end
 
 # baremodule DefaultMapping
 # all_maps = ...
