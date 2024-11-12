@@ -5,8 +5,19 @@ DEFAULT_REDUNDANT_COLS = [
     ["B.vec.before.", "B.vec.after."] .* ["l" "m" "n"]
 ] |> Iterators.flatten
 
+"""
+    standardize_df!(df)
+
+Standardize the DataFrame by:
+1. Converting Float32 columns to Float64
+2. Removing rows with NaN values 
+3. Removing duplicate rows based on start/end times
+4. Removing redundant columns defined in DEFAULT_REDUNDANT_COLS
+"""
 function standardize_df!(df)
     cols2remove = names(df) ∩ DEFAULT_REDUNDANT_COLS
+
+    backwards_comp!(df)
 
     @chain df begin
         transform!(names(df, Float32) .=> ByRow(Float64); renamecols=false) # Convert all columns of Float32 to Float64
@@ -16,12 +27,22 @@ function standardize_df!(df)
     end
 end
 
+"""
+    backwards_comp!(df)
+
+Backwards compatibility for old column names
+"""
+function backwards_comp!(df)
+    # renaming
+    @rename!(df, :Vl => :e_max, :t_us => "t.d_start", :t_ds => "t.d_end")
+end
+
 process!(df::AbstractDataFrame) = begin
-    df |> 
-    dropmissing |> 
-    keep_good_fit! |> 
-    standardize_df! |> 
-    compute_params! |> 
+    df |>
+    dropmissing |>
+    keep_good_fit! |>
+    standardize_df! |>
+    compute_params! |>
     compute_Alfvenicity_params!
 end
 
