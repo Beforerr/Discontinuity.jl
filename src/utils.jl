@@ -3,9 +3,8 @@
 
 Keep only the rows with a fit statistic R² greater than the given value.
 """
-function keep_good_fit!(df; rsquared=0.9)
-    @subset!(df, :"fit.stat.rsquared" .> rsquared)
-end
+keep_good_fit!(df; rsquared=0.9) = filter!(:"fit.stat.rsquared" => >(rsquared), df)
+keep_good_fit(df; rsquared=0.9) = filter(:"fit.stat.rsquared" => >(rsquared), df)
 
 
 """
