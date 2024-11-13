@@ -11,9 +11,9 @@ function compute_params!(df)
     df = @chain df begin
         @rtransform!(
             :dB_norm = norm(:dB),
-            :ω = vector_angle.(:"B.vec.before", :"B.vec.after"),
+            :ω = vector_angle(:"B.vec.before", :"B.vec.after"),
             :ω_in = vector_angle(:"B.vec.before"[1:2], :"B.vec.after"[1:2]),
-            :θ_nk = vector_angle.(:e_min, :n_cross),
+            :θ_nk = vector_angle(:e_min, :n_cross),
         )
         @transform!(
             :"B.mean" = (:"B.before" .+ :"B.after") ./ 2,
