@@ -22,10 +22,31 @@ function standardize_df!(df)
     @chain df begin
         transform!(names(df, Float32) .=> ByRow(Float64); renamecols=false) # Convert all columns of Float32 to Float64
         subset!(names(df, Float64) .=> ByRow(isfinite)) # Remove rows with NaN values
-        unique!(["t_us", "t_ds"]) # Remove duplicate rows
+        remove_duplicates()
         select!(Not(cols2remove)) # Remove additional columns
     end
 end
+
+"""
+    remove_duplicates(df)
+
+Remove duplicates in the DataFrame.
+
+Mark for deletion if either:
+1. Current row has same start/end time as previous row
+2. Current event starts before previous event ends (with this, checking 1 is redundant) 
+"""
+function remove_duplicates(df)
+    sort!(df, :t_us) # Ensure proper time ordering
+    mask = trues(nrow(df)) # Preallocate
+    for i in 2:nrow(df) # Start from second row, compare with previous row
+        if df[i, :t_us] ≤ df[i-1, :t_ds]
+            mask[i] = false
+        end
+    end
+    return df[mask, :]
+end
+
 
 """
     backwards_comp!(df)
