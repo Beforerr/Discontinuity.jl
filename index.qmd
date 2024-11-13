@@ -1,0 +1,18 @@
+---
+title: Discontinuity.jl
+bibliography: files/discontinuitypy.bib
+---
+
+Notations:
+
+- $B$ : Magnetic field magnitude
+- $\mathbf{B}_{1, LMN}, \mathbf{B}_{2, LMN}$ : Magnetic field vector in LMN coordinate system before /after the rotation  `B.vec.before` `B.vec.after`
+- $ω$ : Rotation/shear angle across the discontinuity
+    - see Fig.12 in @tsurutaniInterplanetaryDiscontinuitiesTemporal1979
+    - see Fig.11 in @sodingRadialLatitudinalDependencies2001
+- $ω_{in}$ : In-plane rotation angle of the magnetic field `ω_in`
+
+- $L_{n, cross}$ : Thickness (km) of the current sheet using normal derived from the cross product of the magnetic field vectors at the boundary `L_n_cross`
+    - $L_{n, cross} / d_i$ : Thickness (normalized by the ion inertial length) `L_n_cross_norm`
+- $J_{m}$ : Current density (A/m²) `j0_k`
+    - $J_{m} / J_{A}$ : Current density (normalized by the Alfvénic current) `j0_k_norm`

@@ -12,3 +12,6 @@ install: install-dev-deps
     #!/usr/bin/env  julia --project
     using Pkg;
     Pkg.instantiate();
+
+readme:
+    quarto render index.qmd -o README.md -t gfm
