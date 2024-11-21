@@ -25,6 +25,7 @@ Beforerr = { url = "https://github.com/Beforerr/Beforerr.jl" }
 PlasmaFormulary = { url = "https://github.com/Beforerr/PlasmaFormulary.jl" }
 
 [compat]
+AlgebraOfGraphics = "0.8"
 Arrow = "2"
 DataFrames = "1"
 FileIO = "1"
