@@ -1,10 +1,12 @@
+const RSQUARED = "fit.stat.rsquared"
+
 """
     keep_good_fit!(df; rsquared=0.9)
 
 Keep only the rows with a fit statistic R² greater than the given value.
 """
-keep_good_fit!(df; rsquared=0.9) = filter!(:"fit.stat.rsquared" => >(rsquared), df)
-keep_good_fit(df; rsquared=0.9) = filter(:"fit.stat.rsquared" => >(rsquared), df)
+keep_good_fit!(df; rsquared=0.9) = filter!(RSQUARED => >(rsquared), df)
+keep_good_fit(df; rsquared=0.9) = filter(RSQUARED => >(rsquared), df)
 
 
 """
