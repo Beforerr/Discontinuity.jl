@@ -73,9 +73,9 @@ load(path) = path |> Arrow.Table |> DataFrame
 
 @kwdef struct DataSet
     name = "events"
-    path = missing
-    ts = missing
-    tau = missing
+    path = nothing
+    ts = nothing
+    tau = nothing
     detect_func = "detect_variance"
     method = "fit"
 end
@@ -86,8 +86,8 @@ decode(v::Period) = Dates.format(Time(0) + v, "H:MM:SS")
 Return the filename regex of the dataset.
 """
 function rfilename(ds::DataSet)
-    ts_part = ismissing(ds.ts) ? "" : "ts=" * decode(ds.ts)
-    tau_part = ismissing(ds.tau) ? "" : "tau=" * decode(ds.tau)
+    ts_part = isnothing(ds.ts) ? "" : "ts=" * decode(ds.ts)
+    tau_part = isnothing(ds.tau) ? "" : "tau=" * decode(ds.tau)
     detect_func_part = "detect_func=" * ds.detect_func
     method_part = "method=" * ds.method
     return Regex("^$(ds.name)_tr=.*.*$detect_func_part.*$tau_part.*$ts_part.*$method_part")
@@ -108,8 +108,6 @@ function filename(ds::DataSet, dir)
 end
 
 
-function path(ds::DataSet; dir=".")
-    ismissing(ds.path) ? filename(ds, dir) : ds.path
-end
+path(ds::DataSet; dir=".") = something(ds.path, filename(ds, dir))
 
 load(ds::DataSet; kw...) = (load ∘ path)(ds; kw...)
