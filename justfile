@@ -1,17 +1,6 @@
 default:
     just --list
 
-install-dev-deps:
-    #!/usr/bin/env -S julia --project
-    using Pkg;
-    Beforerr = PackageSpec(url="https://github.com/Beforerr/Beforerr.jl");
-    PlasmaFormulary = PackageSpec(url="https://github.com/Beforerr/plasmaFormulary.jl");
-    Pkg.develop([Beforerr, PlasmaFormulary]);
-
-install: install-dev-deps
-    #!/usr/bin/env  julia --project
-    using Pkg;
-    Pkg.instantiate();
-
 readme:
     quarto render index.qmd -o README.md -t gfm
+    cp README.md docs/src/index.md
