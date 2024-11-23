@@ -42,10 +42,11 @@ end
 
 plot_dist!(l::Layer, maps; kwargs...) = plot_dist!(current_figure(), l, maps; kwargs...)
 
+"""Plot the density distribution of the layer."""
 plot_dist(l::Layer, maps; figure=(;), kwargs...) = plot_dist!(Figure(; figure...), l, maps; kwargs...)
 
-"""backward compatibility"""
 plot_dist(l::Layer; maps=[l_log_map l_norm_log_map j_log_map j_norm_log_map], kwargs...) = plot_dist(l, maps; figure=FIGURE_KWARGS, kwargs...)
+@deprecate plot_dist(l::Layer; maps, kw...) plot_dist(l::Layer, maps; kw...)
 
 function waiting_time(time; δt=Dates.Minute(1))
     # unique and order the time

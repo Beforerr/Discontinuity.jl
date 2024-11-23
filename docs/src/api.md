@@ -8,10 +8,9 @@ Private = false
 Order = [:function]
 ```
 
-Private types:
+Types exported:
 
 ```@autodocs
 Modules = [Discontinuity]
-Public = false
 Order = [:type]
 ```
