@@ -17,6 +17,7 @@ include("processing.jl")
 include("mapping.jl")
 include("plot.jl")
 include("formulary.jl")
+include("detection/detection.jl")
 
 export DataSet
 export load, process!

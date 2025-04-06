@@ -1,0 +1,48 @@
+A step-by-step guide to using the package
+
+```{julia}
+using Speasy
+using Discontinuity: detect_variance, compute_indices
+using Dates
+using DimensionalData
+
+timerange = ["2021-05-03", "2021-05-04"]
+data = get_data("cda/WI_H2_MFI/BGSE", timerange) |> DimArray
+```
+
+```{julia}
+# Now we can detect discontinuities directly from the Speasy variable
+tau = Second(30)
+events = detect_variance(data, tau)
+```
+
+```{julia}
+@b @eval compute_indices(data, tau)
+@profview_allocs compute_indices(data, tau)
+@descend compute_indices(data, tau)
+```
+
+```{julia}
+# Using with DimensionalData
+using DimensionalData
+
+# Convert Speasy data to DimArray
+times = DateTime.(Dates.unix2datetime.(data.time))
+values = data.data
+
+# Create DimArray with time and variable dimensions
+field_data = DimArray(
+    values,
+    (Dim{:time}(times), Dim{:var}(["BX", "BY", "BZ"]))
+)
+
+# Detect discontinuities using the DimArray version
+dim_events = detect_variance(field_data, tau)
+dim_events
+```
+
+Inspecting the magnetic data...
+
+```{python}
+config.mag_meta.data[0].plot()
+```

@@ -1,7 +1,7 @@
 using Unitful
 using Unitful: μ0, Units
 using PlasmaFormulary
-import PlasmaFormulary: plasma_beta, Alfven_velocity, thermal_temperature
+import PlasmaFormulary: plasma_beta, alfven_velocity, thermal_temperature
 
 const DEFAULT_B_UNIT = u"nT"
 const DEFAULT_L_UNIT = u"km"
@@ -10,7 +10,7 @@ const DEFAULT_V_UNIT = u"km/s"
 const DEFAULT_T_UNIT = u"eV"
 
 PlasmaFormulary.plasma_beta(T::Real, n::Real, B::Real) = plasma_beta(T * DEFAULT_T_UNIT, n * DEFAULT_N_UNIT, B * DEFAULT_B_UNIT) |> NoUnits
-PlasmaFormulary.Alfven_velocity(B::Real, n::Real) = Alfven_velocity(B * DEFAULT_B_UNIT, n * DEFAULT_N_UNIT) / DEFAULT_V_UNIT |> NoUnits
+PlasmaFormulary.alfven_velocity(B::Real, n::Real) = alfven_velocity(B * DEFAULT_B_UNIT, n * DEFAULT_N_UNIT) / DEFAULT_V_UNIT |> NoUnits
 PlasmaFormulary.thermal_temperature(V::Real, mass=Unitful.mp) = thermal_temperature(V * DEFAULT_V_UNIT, mass)
 
 """
