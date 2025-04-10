@@ -9,7 +9,7 @@
     sparse_threshold::Int = 15
 end
 
-norm_std(x; dim=1) = norm(nanstd(x; dim))
+norm_std(x; dims=1) = norm(nanstd(x; dims))
 
 """
     compute_std(data, group_idxs, dim)
@@ -28,34 +28,38 @@ end
 
 Compute combined standard deviation.
 """
-function compute_combined_std(data, group_idxs, n, ::Val{dim}) where dim
-    len = length(group_idxs)
-    return tmap(eachindex(group_idxs)) do i
-        if i >= n + 1 && i <= len - n
-            group_idx = vcat(group_idxs[i-n], group_idxs[i+n])
-            # Slower but memory efficient
-            # group_idx = ApplyVector(vcat, group_idxs[i-n], group_idxs[i+n])
-            window_data = selectdim(data, dim, group_idx)
-            norm_std(window_data)
-        else
-            missing
-        end
+function compute_combined_std(data, idx1::UnitRange, idx2::UnitRange, ::Val{dim}) where dim
+    # Slower but memory efficient
+    # group_idx = ApplyVector(vcat, idx1, idx2)
+    group_idx = vcat(idx1, idx2)
+    window_data = selectdim(data, dim, group_idx)
+    norm_std(window_data)
+end
+
+compute_combined_std(data, idx1s, idx2s, d) =
+    tmap(eachindex(idx1s)) do i
+        compute_combined_std(data, idx1s[i], idx2s[i], d)
+    end
+
+function compute_index_fluctuation!(df, data, d; fluc_threshold=1)
+    @chain df begin
+        @transform! :std_combined = compute_combined_std(data, :group_idx_prev, :group_idx_next, d)
+        @transform! :index_fluctuation = @. :std_combined / (:std_prev + :std_next)
+        @subset! :index_fluctuation .> fluc_threshold
     end
 end
 
 """
-    compute_index_std!(data::DataFrame, tau; on=:starts)
+    compute_index_std!(df; std_threshold=2)
 
 Compute the standard deviation index based on the given data.
 
 First get the neighbor standard deviations.
 """
-function compute_index_std!(data::DataFrame, tau; on=:tstart)
-    prev_df = @select(data, :tstart = :tstart .- tau, :std_prev = :std, :len_prev = :len)
-    next_df = @select(data, :tstart = :tstart .+ tau, :std_next = :std, :len_next = :len)
-    return @chain data begin
-        leftjoin!(_, prev_df; on)
-        leftjoin!(_, next_df; on)
+function compute_index_std!(df; std_threshold=2)
+    return @chain df begin
+        @transform! :index_std = @. :std / max(:std_prev, :std_next)
+        @subset! :index_std .> std_threshold
     end
 end
 
@@ -76,59 +80,49 @@ function diff_index(data, group_idxs, ::Val{dim}) where dim
     end
 end
 
+function compute_index_diff!(df, data, d; diff_threshold=0.1)
+    @chain df begin
+        @transform!(:index_diff = diff_index(data, :group_idx, d))
+        @subset!(:index_diff .> diff_threshold)
+    end
+end
+
 """
     compute_indices(data, period, n=2; dim=Ti)
 
 Compute all indices based on the given data and tau value.
 """
-function compute_indices(data, period, n=2; dim=Ti)
+function compute_indices(data, period, sparse_num; n=2, dim=Ti, std_threshold=2, fluc_threshold=1, diff_threshold=0.1)
     every = period / n
     times = dims(data, dim).val |> parent
-    group_idxs, tstart = groupby_dynamic(times, every, period)
     d = Val(dimnum(data, dim))
     pdata = parent(data)
 
-    len = length.(group_idxs)
-    index_diff = diff_index(pdata, group_idxs, d)
-    std = compute_std(pdata, group_idxs, d)
-    std_combined = compute_combined_std(pdata, group_idxs, n, d)
-    df = DataFrame((; tstart, len, std, std_combined, index_diff))
+    group_idx, tstart = groupby_dynamic(times, every, period)
+    len = length.(group_idx)
+    std = compute_std(pdata, group_idx, d)
 
-    @chain begin
-        compute_index_std!(df, period)
-        @rtransform!(
-            :time = :tstart + period / 2,
-            :tstop = :tstart + period,
-            :index_std = :std / max(:std_prev, :std_next),
-            :index_fluctuation = :std_combined / (:std_prev + :std_next)
+    df = DataFrame((; tstart, len, std, group_idx))
+    on = :tstart
+    prev_df = @select(df, $on = $on .- period, :std_prev = :std, :len_prev = :len, :group_idx_prev = :group_idx)
+    next_df = @select(df, $on = $on .+ period, :std_next = :std, :len_next = :len, :group_idx_next = :group_idx)
+
+    @chain df begin
+        leftjoin!(_, prev_df; on)
+        leftjoin!(_, next_df; on)
+        dropmissing!
+        @subset! begin
+            :len .> sparse_num
+            :len_prev .> sparse_num
+            :len_next .> sparse_num
+        end
+        compute_index_std!(_; std_threshold)
+        compute_index_diff!(_, pdata, d; diff_threshold)
+        compute_index_fluctuation!(_, pdata, d; fluc_threshold)
+        @transform!(
+            :time = :tstart .+ period / 2,
+            :tstop = :tstart .+ period,
         )
-    end
-end
-
-"""
-    filter_indices!(data::DataFrame;
-                   index_std_threshold=2.0,
-                   index_fluc_threshold=1.0,
-                   index_diff_threshold=0.1,
-                   sparse_num=15)
-
-Filter indices to get possible discontinuities.
-"""
-function filter_indices!(
-    data::DataFrame;
-    index_std_threshold=2.0,
-    index_fluc_threshold=1.0,
-    index_diff_threshold=0.1,
-    sparse_num=15
-)
-    @subset! data @byrow begin
-        :index_std > index_std_threshold
-        isfinite(:index_std)
-        :index_fluctuation > index_fluc_threshold
-        :index_diff > index_diff_threshold
-        :len > sparse_num
-        :len_prev > sparse_num
-        :len_next > sparse_num
     end
 end
 
@@ -137,12 +131,10 @@ end
 
 Detect discontinuities based on variance analysis.
 """
-function detect_variance(data, tau; n=2, dim=Ti, sparse_num=nothing)
+function detect_variance(data, tau; n=2, dim=Ti, sparse_num=nothing, kwargs...)
     ts = time_resolution(data)
     sparse_num = isnothing(sparse_num) ? ceil(Int, tau / ts / 3) : sparse_num
-
-    indices = compute_indices(data, tau, n; dim)
-    filter_indices!(indices; sparse_num)
+    compute_indices(data, tau, sparse_num; n, dim, kwargs...)
 end
 
 
