@@ -7,6 +7,7 @@ using Statistics
 using NaNStatistics
 using StaticArrays
 using OhMyThreads
+using ProgressMeter
 
 export detect_variance
 
@@ -25,7 +26,7 @@ function detect_variance(f, tmin, tmax, tau; split=nothing, kwargs...)
         return detect_variance(f(tmin, tmax; add_unit=false), tau; kwargs...)
     else
         tranges = split_range(tmin, tmax, split)
-        mapreduce(append!, tranges) do (chunk_min, chunk_max)
+        @showprogress mapreduce(append!, tranges) do (chunk_min, chunk_max)
             detect_variance(f, chunk_min, chunk_max, tau; kwargs...)
         end
     end
