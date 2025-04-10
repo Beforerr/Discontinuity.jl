@@ -138,10 +138,10 @@ end
 Detect discontinuities based on variance analysis.
 """
 function detect_variance(data, tau; n=2, dim=Ti, sparse_num=nothing)
-    ts = time_resolution(data; dim)
+    ts = time_resolution(data)
     sparse_num = isnothing(sparse_num) ? ceil(Int, tau / ts / 3) : sparse_num
 
-    indices = compute_indices(data, tau, n; dim=dim)
+    indices = compute_indices(data, tau, n; dim)
     filter_indices!(indices; sparse_num)
 end
 
