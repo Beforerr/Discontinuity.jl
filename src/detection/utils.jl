@@ -4,8 +4,8 @@ import Statistics: middle
 
 # https://github.com/JuliaStats/Statistics.jl/issues/47
 _middle(args...) = middle(args)
-_middle(t1::Nanosecond) = t1
-_middle(t1::Nanosecond, t2::Nanosecond) = Nanosecond(round(Int, (t1 + t2).value / 2))
+_middle(t1::Dates.AbstractTime) = t1
+_middle(t1::T, t2::T) where T<:Dates.AbstractTime = T(round(Int, (t1 + t2).value / 2))
 
 function diff_median(times)
     dts = diff(times)
@@ -56,3 +56,23 @@ end
 
 groupby_dynamic(x::Dimension, args...; kwargs...) =
     groupby_dynamic(parent(x.val), args...; kwargs...)
+
+
+"""
+    split_range(t0, t1, n)
+
+Split the range from `t0` to `t1` into `n` parts.
+"""
+function split_range(t0, t1, n::Int)
+    if n <= 1
+        ((t0, t1),)
+    else
+        dt = (t1 - t0) / n
+        ((t0 + (i - 1) * dt, min(t0 + i * dt, t1)) for i in 1:n)
+    end
+end
+
+function split_range(t0, t1, dt)
+    n = ceil(Int, (t1 - t0) / dt)
+    ((t0 + (i - 1) * dt, min(t0 + i * dt, t1)) for i in 1:n)
+end

@@ -88,18 +88,18 @@ function compute_index_diff!(df, data, d; diff_threshold=0.1)
 end
 
 """
-    compute_indices(data, period, n=2; dim=Ti)
+    detect_variance(data, period, sparse_num; n=2, dim=Ti, std_threshold=2, fluc_threshold=1, diff_threshold=0.1)
 
-Compute all indices based on the given data and tau value.
+Detect discontinuities based on variance analysis.
 """
-function compute_indices(data, period, sparse_num; n=2, dim=Ti, std_threshold=2, fluc_threshold=1, diff_threshold=0.1)
+function detect_variance(data, period, sparse_num; n=2, dim=Ti, std_threshold=2, fluc_threshold=1, diff_threshold=0.1)
     every = period / n
     times = dims(data, dim).val |> parent
     d = Val(dimnum(data, dim))
     pdata = parent(data)
 
     group_idx, tstart = groupby_dynamic(times, every, period)
-    len = length.(group_idx)
+    len = @. UInt16(length(group_idx))
     std = compute_std(pdata, group_idx, d)
 
     df = DataFrame((; tstart, len, std, group_idx))
@@ -126,20 +126,14 @@ function compute_indices(data, period, sparse_num; n=2, dim=Ti, std_threshold=2,
     end
 end
 
-"""
-    detect_variance(data, tau, n=2; dim=Ti, sparse_num=nothing)
-
-Detect discontinuities based on variance analysis.
-"""
-function detect_variance(data, tau; n=2, dim=Ti, sparse_num=nothing, kwargs...)
+function detect_variance(data, period; n=2, dim=Ti, sparse_num=nothing, kwargs...)
     ts = time_resolution(data)
-    sparse_num = isnothing(sparse_num) ? ceil(Int, tau / ts / 3) : sparse_num
-    compute_indices(data, tau, sparse_num; n, dim, kwargs...)
+    sparse_num = isnothing(sparse_num) ? ceil(Int, period / ts / 3) : sparse_num
+    detect_variance(data, period, sparse_num; n, dim, kwargs...)
 end
 
 
 # https://github.com/brenhinkeller/NaNStatistics.jl/issues/55
 # ustrip first provides a performance boost
-function compute_indices(data::AbstractArray{Q}, args...; kwargs...) where Q<:Quantity
-    return compute_indices(ustrip(data), args...; kwargs...)
-end
+detect_variance(data::AbstractArray{Q}, args...; kwargs...) where Q<:Quantity =
+    detect_variance(ustrip(data), args...; kwargs...)
