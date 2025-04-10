@@ -1,5 +1,4 @@
 [deps]
-Beforerr = "49aed396-608e-4c3f-b6d6-a749216c9ea7"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DimensionalData = "0703355e-b756-11e9-17c0-8b28908087d0"
 Discontinuity = "b54b658d-ecbf-47cc-8c7f-673f5d2a4b30"
