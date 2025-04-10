@@ -20,8 +20,8 @@ function standardize_df!(df)
     backwards_comp!(df)
 
     @chain df begin
-        transform!(names(df, Float32) .=> ByRow(Float64); renamecols=false) # Convert all columns of Float32 to Float64
-        subset!(names(df, Float64) .=> ByRow(isfinite)) # Remove rows with NaN values
+        transform!(names(df, Union{Float32,Missing}) .=> ByRow(Float64); renamecols=false) # Convert all columns of Float32 to Float64
+        subset!(names(df, Union{Float64,Missing}) .=> ByRow(isfinite); skipmissing=true) # Remove rows with NaN values
         remove_duplicates()
         select!(Not(cols2remove)) # Remove additional columns
     end
@@ -58,6 +58,7 @@ function backwards_comp!(df)
     :"t.d_start" in names(df) && @rename!(df, :t_us = :"t.d_start")
     :"t.d_end" in names(df) && @rename!(df, :t_ds = :"t.d_end")
     :"Vl" in names(df) && @rename!(df, :e_max = :Vl)
+    :"Vn" in names(df) && @rename!(df, :e_min = :Vn)
     :"V.before" in names(df) && @rename!(df, :V_us = :"V.before")
     :"V.after" in names(df) && @rename!(df, :V_ds = :"V.after")
     :"V.ion.before" in names(df) && @rename!(df, :V_us = :"V.ion.before")
@@ -100,7 +101,7 @@ function filename(ds::DataSet, dir)
     r = rfilename(ds)
     files = [f for f in readdir(dir) if match(r, f) !== nothing]
     if isempty(files)
-        error("No file found for $ds")
+        error("No file found for $ds with regex pattern: $r, in $dir")
     elseif length(files) > 1
         error("Multiple files found for $ds: $files")
     end

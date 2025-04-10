@@ -13,7 +13,6 @@ function compute_params!(df)
             :dB_norm = norm(:dB),
             :ω = vector_angle(:"B.vec.before", :"B.vec.after"),
             :ω_in = vector_angle(:"B.vec.before"[1:2], :"B.vec.after"[1:2]),
-            :θ_nk = vector_angle(:e_min, :n_cross),
         )
         @transform!(
             :"B.mean" = (:"B.before" .+ :"B.after") ./ 2,
@@ -26,9 +25,14 @@ function compute_params!(df)
         @transform!(
             :j0_k = abs.(:j0_k),
             :j0_k_norm = abs.(:j0_k ./ :j_Alfven),
-            :L_n_cross_norm = abs.(:L_n_cross ./ :ion_inertial_length),
         )
     end
+
+    :"n_cross" in names(df) && @rtransform!(
+        df,
+        :θ_nk = vector_angle(:e_min, :n_cross),
+        :L_n_cross_norm = abs(:L_n_cross / :ion_inertial_length),
+    )
 
     if "T.before" in names(df)
         @transform! df :"T.mean" = (:"T.before" .+ :"T.after") ./ 2

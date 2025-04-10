@@ -35,7 +35,7 @@ function unitize!(
     ncols=[DEFAULT_N_COL],
     Vcols=[],
     Tcols=[DEFAULT_T_COL],
-    Lcols=DEFAULT_L_COLS,
+    Lcols=DEFAULT_L_COLS ∩ names(df),
     B_unit=DEFAULT_B_UNIT,
     n_unit=DEFAULT_N_UNIT,
     V_unit=DEFAULT_V_UNIT,
