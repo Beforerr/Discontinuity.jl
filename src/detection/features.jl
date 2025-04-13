@@ -4,9 +4,9 @@ function _argmax_pair(metric, a)
     return Tuple(max_idx)
 end
 
-function argmax_pair(metric, a)
+function argmax_pair(metric, a::AbstractMatrix{T}) where T
     # Manually compute distances and track maximum
-    max_dist = -Inf
+    max_dist = zero(T)
     max_i, max_j = 1, 1
     n = size(a, 2)
     @inbounds for j in 1:n
