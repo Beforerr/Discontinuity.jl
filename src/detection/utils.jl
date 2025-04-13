@@ -32,12 +32,16 @@ function time_resolution(data::DimArray)
     time_resolution(parent(time_dim.val))
 end
 
-function groupby_dynamic(x::AbstractVector{T}, every, period=every) where T
+# https://docs.pola.rs/api/python/stable/reference/dataframe/api/polars.DataFrame.group_by_dynamic.html
+"""
+Group `x` into windows based on `every` and `period`.
+"""
+function groupby_dynamic(x::AbstractVector{T}, every, period=every, start_by=:window) where T
     min = minimum(x)
     max = maximum(x)
     group_idx = Vector{UnitRange{Int}}()
     starts = Vector{T}()
-    current_start = min
+    current_start = ifelse(start_by == :window, floor(min, every), min)
     while current_start <= max
         window_end = current_start + period
         # Find indices of rows that fall in the current window using searchsorted for better performance
