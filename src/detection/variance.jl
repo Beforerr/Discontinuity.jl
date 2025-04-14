@@ -9,37 +9,43 @@
     sparse_threshold::Int = 15
 end
 
-norm_std(x; dims=1) = norm(nanstd(x; dims))
+# This allocates temporary arrays but faster than the second option
+# See https://github.com/brenhinkeller/NaNStatistics.jl/issues/55
+norm_std(x; dim=1) = norm(nanstd(x; dims=(dim,)))
+
+@views function norm_std(x, dim)
+    ax = axes(x)
+    Ipre = CartesianIndices(ax[1:dim-1])
+    Ipost = CartesianIndices(ax[dim+1:end])
+    norm(nanstd(x[I1, :, I2]) for I1 in Ipre, I2 in Ipost)
+end
 
 """
-    compute_std(data, group_idxs, dim)
+    compute_std(data, group_idxs, ::Val{dim})
 
 Compute standard deviation over a rolling window.
 """
 function compute_std(data, group_idxs, ::Val{dim}) where dim
     return tmap(group_idxs) do group_idx
         window_data = selectdim(data, dim, group_idx)
-        norm_std(window_data)
+        norm_std(window_data; dim)
     end
 end
 
 """
-    compute_combined_std(data, group_idxs, n, ::Val{dim})
+    compute_combined_std(data, idx1s, idx2s, ::Val{dim})
 
 Compute combined standard deviation.
 """
-function compute_combined_std(data, idx1::UnitRange, idx2::UnitRange, ::Val{dim}) where dim
-    # Slower but memory efficient
-    # group_idx = ApplyVector(vcat, idx1, idx2)
-    group_idx = vcat(idx1, idx2)
-    window_data = selectdim(data, dim, group_idx)
-    norm_std(window_data)
-end
-
-compute_combined_std(data, idx1s, idx2s, d) =
-    tmap(eachindex(idx1s)) do i
-        compute_combined_std(data, idx1s[i], idx2s[i], d)
+function compute_combined_std(data, idx1s, idx2s, ::Val{dim}) where dim
+    return tmap(idx1s, idx2s) do idx1, idx2
+        # Slower but memory efficient
+        # group_idx = ApplyVector(vcat, idx1, idx2)
+        group_idx = vcat(idx1, idx2)
+        window_data = selectdim(data, dim, group_idx)
+        norm_std(window_data; dim)
     end
+end
 
 function compute_index_fluctuation!(df, data, d; fluc_threshold=1)
     @chain df begin
@@ -92,7 +98,7 @@ end
 
 Detect discontinuities based on variance analysis.
 """
-function detect_variance(data, period, sparse_num; n=2, dim=Ti, std_threshold=2, fluc_threshold=1, diff_threshold=0.1)
+function detect_variance(data, period, sparse_num, ::Val{dim}; n=2, std_threshold=2, fluc_threshold=1, diff_threshold=0.1) where dim
     every = period / n
     times = dims(data, dim).val |> parent
     d = Val(dimnum(data, dim))
@@ -129,7 +135,7 @@ end
 function detect_variance(data, period; n=2, dim=Ti, sparse_num=nothing, kwargs...)
     ts = time_resolution(data)
     sparse_num = isnothing(sparse_num) ? ceil(Int, period / ts / 3) : sparse_num
-    detect_variance(data, period, sparse_num; n, dim, kwargs...)
+    detect_variance(data, period, sparse_num, Val(dim); n, kwargs...)
 end
 
 
