@@ -1,26 +1,41 @@
 using Unitful
-using Unitful: μ0, Units
+using Unitful: μ0, Units, mp
+using Unitful: BField
 using PlasmaFormulary
-import PlasmaFormulary: plasma_beta, alfven_velocity, thermal_temperature
+import PlasmaFormulary: plasma_beta, alfven_velocity, thermal_temperature, NumberDensity
 
 const DEFAULT_B_UNIT = u"nT"
 const DEFAULT_L_UNIT = u"km"
 const DEFAULT_N_UNIT = u"cm^-3"
 const DEFAULT_V_UNIT = u"km/s"
+const V_UNIT = u"km/s"
 const DEFAULT_T_UNIT = u"eV"
+
+Unitful.preferunits(u"km")
+
+function Alfven_speed(B::BField, n::NumberDensity)
+    return B / sqrt(μ0 * n * mp) |> upreferred
+end
+
+function gradient_current(dBdt, V)
+    return dBdt / (V * μ0) |> upreferred
+end
+
+gradient_current(dBdt::Unitful.Frequency, V) =
+    gradient_current(dBdt * DEFAULT_B_UNIT, V)
 
 PlasmaFormulary.plasma_beta(T::Real, n::Real, B::Real) = plasma_beta(T * DEFAULT_T_UNIT, n * DEFAULT_N_UNIT, B * DEFAULT_B_UNIT) |> NoUnits
 PlasmaFormulary.alfven_velocity(B::Real, n::Real) = alfven_velocity(B * DEFAULT_B_UNIT, n * DEFAULT_N_UNIT) / DEFAULT_V_UNIT |> NoUnits
 PlasmaFormulary.thermal_temperature(V::Real, mass=Unitful.mp) = thermal_temperature(V * DEFAULT_V_UNIT, mass)
 
 """
-    unitize([f], unit::Units)
+    safeunitize(x, unit)
 
-Convert the input data `f` to the specified `unit` if the data type is `Float64`.
+Convert the input data `x` to the specified `unit` if `x` does not have the unit.
 """
-function safeunitize(f, unit::Units)
-    return eltype(f) <: Union{Missing,Float64} ? f .* unit : f
-end
+safeunitize(x, unit) = x
+safeunitize(x::Real, unit) = x * unit
+safeunitize(x::AbstractArray, unit) = safeunitize.(x, unit)
 
 unitize(unit::Units) = f -> safeunitize(f, unit)
 
@@ -53,11 +68,19 @@ function unitize!(
     )
 end
 
-
-function anisotropy(B, density, para_temp, perp_temp)
-    Λ = @. (μ0 * density * (para_temp - perp_temp) / B^2) |> NoUnits
-    return Λ
+function anisotropy(Bmag::BField, n, T_parp, T_perp)
+    (μ0 * n * (T_parp - T_perp) / Bmag^2) |> NoUnits
 end
+
+anisotropy(Bmag::BField, n, T3; i=3) = anisotropy(Bmag, n, decompose_T3(T3, i)...)
+
+function decompose_T3(x, i)
+    T_parp = x[i]
+    T_perp = mean(x[j] for j in eachindex(x) if j != i)
+    return T_parp, T_perp
+end
+
+anisotropy(B::AbstractVector, args...) = anisotropy(norm(B), args...)
 
 function calc_beta!(
     df;

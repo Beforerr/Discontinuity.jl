@@ -87,3 +87,8 @@ function tview(da, t0, t1; query=TimeDim)
     Dim, T = dimtype_eltype(da, query)
     return @view da[Dim(T(t0) .. T(t1))]
 end
+
+function tview(da, t0; query=TimeDim, Selector=Near)
+    Dim, T = dimtype_eltype(da, query)
+    da[Dim(Selector(T(t0)))]
+end

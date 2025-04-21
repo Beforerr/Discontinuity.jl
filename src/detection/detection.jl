@@ -18,12 +18,12 @@ include("utils.jl")
 include("variance.jl")
 include("features.jl")
 
-function ids_finder(data, tau; kwargs...)
+function ids_finder(data::AbstractArray, tau, args...; kwargs...)
     events = detect_variance(data, tau; kwargs...)
-    process_events!(events, data; kwargs...)
+    process_events!(events, data, args...; kwargs...)
 end
 
-for f in (:detect_variance, :ids_finder)
+for f in (:detect_variance,)
 
     doc = """
         $(f)(f, tmin, tmax, tau; split=1, kwargs...)
@@ -41,6 +41,26 @@ for f in (:detect_variance, :ids_finder)
             @showprogress mapreduce(append!, tranges) do trange
                 $f(f, trange..., tau; kwargs...)
             end
+        end
+    end
+end
+
+
+"""
+    ids_finder(f, tmin, tmax, tau, args...; split=1, kwargs...)
+
+Apply `ids_finder` on a time series `f(tmin, tmax)`
+
+Optional splitting into multiple chunks to improve performance and memory efficiency.
+"""
+function ids_finder(fB, tmin, tmax, tau, args...; split=nothing, kwargs...)
+    if isnothing(split)
+        new_args = map(f -> f(tmin, tmax), args)
+        ids_finder(fB(tmin, tmax; add_unit=false), tau, new_args...; kwargs...)
+    else
+        tranges = split_range(tmin, tmax, split)
+        @showprogress mapreduce(append!, tranges) do trange
+            ids_finder(fB, trange..., tau, args...; kwargs...)
         end
     end
 end

@@ -17,8 +17,9 @@ https://en.wikipedia.org/wiki/Vector_projection
 """
 sproj(v1, v2) = v1 ⋅ v2 / norm(v2)
 
-"""Return the angle between two vectors."""
-function vector_angle(v1, v2)
-    cos_angle = v1 ⋅ v2 / (norm(v1) * norm(v2))
-    return acosd(cos_angle)
+"""The angle between two vectors"""
+function angle_between(v1, v2)
+    return acosd(v1 ⋅ v2 / (norm(v1) * norm(v2)))
 end
+
+const vector_angle = angle_between
