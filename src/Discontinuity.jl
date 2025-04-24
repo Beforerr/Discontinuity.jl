@@ -9,6 +9,9 @@ using LinearAlgebra
 using Beforerr
 using Dates
 using Distributions, FHist
+using Unitful
+
+Unitful.preferunits(u"km")
 
 include("utils.jl")
 include("naming.jl")

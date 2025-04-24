@@ -8,13 +8,6 @@ include("fit.jl")
 times(data) = DimensionalData.lookup(dims(data, TimeDim))
 
 
-@. tanh_model(x, A, μ, σ, B) = A * tanh((x - μ) / σ) + B
-tanh_model!(y, x, A, μ, σ, B) = y .= tanh_model.(x, A, μ, σ, B)
-
-tanh_model!(y, x, p) = tanh_model!(y, x, p...)
-tanh_model(x, p) = tanh_model(x, p...)
-
-
 """
     fit_maximum_variance_direction(data, times)
 
@@ -66,6 +59,7 @@ function mva_features(data)
         λ2_over_λ3=eigen.values[2] / eigen.values[3],
         e_max=eigen.vectors[:, 1],
         n_mva=eigen.vectors[:, 3],
+        B_n=@views mean(mva_data[:, 3]),
         fit...
     )
 end

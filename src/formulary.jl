@@ -11,8 +11,6 @@ const DEFAULT_V_UNIT = u"km/s"
 const V_UNIT = u"km/s"
 const DEFAULT_T_UNIT = u"eV"
 
-Unitful.preferunits(u"km")
-
 function Alfven_speed(B::BField, n::NumberDensity)
     return B / sqrt(μ0 * n * mp) |> upreferred
 end

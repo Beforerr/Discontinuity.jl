@@ -88,8 +88,8 @@ function process_events!(events, data, V; kwargs...)
         @transform! @astable begin
             :V_n_cross = sproj.(:V, :n_cross)
             :V_n_mva = sproj.(:V, :n_mva)
-            :L_n_cross = :duration .* :V_n_cross
-            :L_n_mva = :duration .* :V_n_mva
+            :L_n_cross = upreferred.(:duration .* :V_n_cross)
+            :L_n_mva = upreferred.(:duration .* :V_n_mva)
             :J_m_max_mva = gradient_current.(:grad, :V_n_mva)
             :J_m_max_cross = gradient_current.(:grad, :V_n_cross)
         end

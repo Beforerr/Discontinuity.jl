@@ -1,3 +1,9 @@
+@. tanh_model(x, A, μ, σ, B) = A * tanh((x - μ) / σ) + B
+tanh_model!(y, x, A, μ, σ, B) = y .= tanh_model.(x, A, μ, σ, B)
+
+tanh_model!(y, x, p) = tanh_model!(y, x, p...)
+tanh_model(x, p) = tanh_model(x, p...)
+
 """
     HyperbolicTangentFit{T}
 
