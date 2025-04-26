@@ -26,6 +26,11 @@ PlasmaFormulary.plasma_beta(T::Real, n::Real, B::Real) = plasma_beta(T * DEFAULT
 PlasmaFormulary.alfven_velocity(B::Real, n::Real) = alfven_velocity(B * DEFAULT_B_UNIT, n * DEFAULT_N_UNIT) / DEFAULT_V_UNIT |> NoUnits
 PlasmaFormulary.thermal_temperature(V::Real, mass=Unitful.mp) = thermal_temperature(V * DEFAULT_V_UNIT, mass)
 
+
+function Alfven_current(B, n)
+    return upreferred(Alfven_speed(B, n) * n * Unitful.q)
+end
+
 """
     safeunitize(x, unit)
 
