@@ -1,12 +1,13 @@
 using LsqFit
 using Statistics
 using Dates
-using Enzyme
-using Enzyme: Reverse, gradient
 include("fit.jl")
 
 times(data) = DimensionalData.lookup(dims(data, TimeDim))
 
+"""Auto differentiation is used when `Enzyme` is available."""
+function _gradient end
+_gradient(fit::HyperbolicTangentFit, x) = fit.A / fit.σ * sech((x - fit.μ) / fit.σ)^2
 
 """
     fit_maximum_variance_direction(data, times)
@@ -16,7 +17,7 @@ Fit a hyperbolic tangent model to time-series in `data` and extract features
 function fit_maximum_variance_direction(data, times; model=tanh_model!, inplace=true)
     # Not enough points
     if length(data) < 4
-        return (t_fit=missing, fit_param=missing)
+        return (t_fit=missing, fit_param=missing, grad=missing)
     end
 
     t0 = minimum(times)
@@ -37,7 +38,7 @@ function fit_maximum_variance_direction(data, times; model=tanh_model!, inplace=
 
     μ = p[2]
     f = FitModel(model)(p)
-    grad = gradient(Reverse, f, μ)[1] / uconvert(u"s", tspan)
+    grad = _gradient(f, μ) / uconvert(u"s", tspan)
     t_fit = t0 + Nanosecond(round(Int, μ * (tspan / Nanosecond(1))))
     return (; t_fit, fit_param=p, grad)
 end
