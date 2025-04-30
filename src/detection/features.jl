@@ -1,49 +1,10 @@
 using SPEDAS: mva, mva_eigen, rotate
 using PlasmaFormulary: inertial_length
 
-include("./features/mva.jl")
-
 const SV3 = SVector{3}
 
-function _argmax_pair(metric, a)
-    dist_matrix = pairwise(metric, eachrow(a))
-    max_idx = argmax(dist_matrix)
-    return Tuple(max_idx)
-end
-
-function argmax_pair(metric, a::AbstractMatrix{T}) where T
-    # Manually compute distances and track maximum
-    max_dist = zero(T)
-    max_i, max_j = 1, 1
-    n = size(a, 2)
-    @inbounds for j in 1:n
-        aj = view(a, :, j)
-        for i in (j+1):n
-            ai = view(a, :, i)
-            dist = metric(ai, aj)
-            if dist > max_dist
-                max_dist, max_i, max_j = dist, i, j
-            end
-        end
-    end
-    return (max_i, max_j)
-end
-
-function ts_max_distance(data, times; dist=Euclidean())
-    i, j = argmax_pair(dist, PermutedDimsArray(data, (2, 1)))
-    return minmax(times[i], times[j])
-end
-
-"""
-    ts_max_distance(ts; query=TimeDim)
-
-Compute the time interval when the timeseries has maximum cumulative variation.
-"""
-function ts_max_distance(ts; query=TimeDim, dist=Euclidean())
-    data = parent(ts)
-    times = dims(ts, query)
-    return ts_max_distance(data, times; dist)
-end
+include("./features/duration.jl")
+include("./features/mva.jl")
 
 function stat_features(data)
     B_mags = map(norm, eachrow(data))
