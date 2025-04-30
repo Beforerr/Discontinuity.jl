@@ -94,19 +94,22 @@ function compute_index_diff!(df, data, d; diff_threshold=0.1)
 end
 
 """
-    detect_variance(data, period, sparse_num; n=2, dim=Ti, std_threshold=2, fluc_threshold=1, diff_threshold=0.1)
+    detect_variance(data, times, period, sparse_num, d; kwargs...)
+    detect_variance(data::AbstractDimArray, period, sparse_num; dim=Ti, kwargs...)
 
 Detect discontinuities based on variance analysis.
-"""
-function detect_variance(data, period, sparse_num, ::Val{dim}; n=2, std_threshold=2, fluc_threshold=1, diff_threshold=0.1) where dim
-    every = period / n
-    times = dims(data, dim).val |> parent
-    d = Val(dimnum(data, dim))
-    pdata = parent(data)
 
+Keyword arguments:
+- `n=2`: Number of periods to split the time series into
+- `std_threshold=2`: Threshold for standard deviation
+- `fluc_threshold=1`: Threshold for index fluctuation
+- `diff_threshold=0.1`: Threshold for difference
+"""
+function detect_variance(data, times, period, sparse_num, d; n=2, std_threshold=2, fluc_threshold=1, diff_threshold=0.1)
+    every = period / n
     group_idx, tstart = groupby_dynamic(times, every, period)
     len = @. UInt16(length(group_idx))
-    std = compute_std(pdata, group_idx, d)
+    std = compute_std(data, group_idx, d)
 
     df = DataFrame((; tstart, len, std, group_idx))
     on = :tstart
@@ -123,13 +126,19 @@ function detect_variance(data, period, sparse_num, ::Val{dim}; n=2, std_threshol
             :len_next .> sparse_num
         end
         compute_index_std!(_; std_threshold)
-        compute_index_diff!(_, pdata, d; diff_threshold)
-        compute_index_fluctuation!(_, pdata, d; fluc_threshold)
+        compute_index_diff!(_, data, d; diff_threshold)
+        compute_index_fluctuation!(_, data, d; fluc_threshold)
         @transform!(
             :time = :tstart .+ period / 2,
             :tstop = :tstart .+ period,
         )
     end
+end
+
+function detect_variance(data::AbstractDimArray, period, sparse_num, ::Val{dim}; kwargs...) where dim
+    d = Val(dimnum(data, dim))
+    times = parent(DimensionalData.lookup(dims(data, dim)))
+    detect_variance(parent(data), times, period, sparse_num, d; kwargs...)
 end
 
 function detect_variance(data, period; n=2, dim=Ti, sparse_num=nothing, kwargs...)
