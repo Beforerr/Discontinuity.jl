@@ -5,6 +5,18 @@ include("fit.jl")
 
 times(data) = DimensionalData.lookup(dims(data, TimeDim))
 
+function init_p0(data, xdata)
+    x_min, x_max = 0, maximum(xdata)
+    A0 = (data[end] - data[1]) / 2
+    B0 = (data[end] + data[1]) / 2
+    μ0 = x_min + (x_max - x_min) / 2
+    σ0 = (x_max - x_min) / 7
+    p0 = [A0, μ0, σ0, B0]
+    lb = SA[-2abs(A0), x_min, 0.0, B0-abs(A0)]
+    ub = SA[2abs(A0), x_max, Inf, B0+abs(A0)]
+    return (p0, lb, ub)
+end
+
 """
     fit_maximum_variance_direction(data, times)
 
@@ -16,26 +28,18 @@ function fit_maximum_variance_direction(data, times; model=tanh_model!, inplace=
         return (; t_fit=missing, fit_param=missing, grad=missing)
     end
 
+    dt = Millisecond(1)
     t0 = minimum(times)
-    tspan = maximum(times) - t0
-    xdata = @. (times - t0) / tspan
-    x_min, x_max = 0, 1
+    xdata = @. (times - t0) / dt
 
-    A0 = (data[end] - data[1]) / 2
-    B0 = (data[end] + data[1]) / 2
-    μ0 = x_min + (x_max - x_min) / 2
-    σ0 = (x_max - x_min) / 7
-
-    p0 = [A0, μ0, σ0, B0]
-    lb = SA[-2abs(A0), x_min, 0.0, B0-abs(A0)]
-    ub = SA[2abs(A0), x_max, Inf, B0+abs(A0)]
+    p0, lb, ub = init_p0(data, xdata)
     fit = curve_fit(model, xdata, data, p0; lower=lb, upper=ub, inplace)
     p = fit.param
 
     μ = p[2]
     f = FitModel(model)(p)
-    grad = _gradient(f, μ) / uconvert(u"s", tspan)
-    t_fit = t0 + Nanosecond(round(Int, μ * (tspan / Nanosecond(1))))
+    grad = _gradient(f, μ) / uconvert(u"s", dt)
+    t_fit = t0 + Nanosecond(round(Int, μ * (dt / Nanosecond(1))))
     return (; t_fit, fit_param=p, grad)
 end
 
@@ -60,4 +64,9 @@ function mva_features(data)
         B_n=mean(B_n),
         fit...
     )
+end
+
+
+function mva_transform((V, B), tmin, tmax; tb_min=tmin, tb_max=tmax)
+    mva(V(tmin, tmax), B(tb_min, tb_max))
 end
