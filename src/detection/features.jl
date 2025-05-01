@@ -1,5 +1,4 @@
 using SPEDAS: mva, mva_eigen, rotate
-using PlasmaFormulary: inertial_length
 
 const SV3 = SVector{3}
 
@@ -21,7 +20,7 @@ function process_events!(events, data; dist=Euclidean(), B_unit=DEFAULT_B_UNIT, 
             t_ds = :t_us_ds[2]
             data_us = SV3(tview(data, t_us))
             data_ds = SV3(tview(data, t_ds))
-            :duration = t_ds - t_us
+            :duration = uconvert(u"s", t_ds - t_us)
             :n_cross = cross(data_us, data_ds)
             :ω = angle_between(data_us, data_ds)
         end
@@ -39,7 +38,7 @@ function process_events!(events, data, V; kwargs...)
     @chain begin
         process_events!(events, data; kwargs...)
         @rtransform! @astable begin
-            V_t = tview(V, :time)
+            V_t = _unitify_V(parent(tview(V, :time)))
             :V = V_t
             # t_us = :t_us_ds[1]
             # t_ds = :t_us_ds[2]
@@ -49,10 +48,10 @@ function process_events!(events, data, V; kwargs...)
         @transform! @astable begin
             :V_n_cross = sproj.(:V, :n_cross)
             :V_n_mva = sproj.(:V, :n_mva)
-            :L_n_cross = upreferred.(:duration .* :V_n_cross)
-            :L_n_mva = upreferred.(:duration .* :V_n_mva)
-            :J_m_max_mva = gradient_current.(:grad, :V_n_mva)
-            :J_m_max_cross = gradient_current.(:grad, :V_n_cross)
+            :L_n_cross = @. upreferred(abs(:duration * :V_n_cross))
+            :L_n_mva = @. upreferred(abs(:duration * :V_n_mva))
+            :J_m_max_mva = @. abs(gradient_current(:grad, :V_n_mva))
+            :J_m_max_cross = @. abs(gradient_current(:grad, :V_n_cross))
         end
     end
 end

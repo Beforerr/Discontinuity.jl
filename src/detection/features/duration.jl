@@ -4,15 +4,16 @@ function _argmax_pair(metric, a)
     return Tuple(max_idx)
 end
 
-function argmax_pair(metric, a::AbstractMatrix{T}) where T
+function argmax_pair(metric, a, ::Val{d}=Val{2}()) where {
+    d}
     # Manually compute distances and track maximum
-    max_dist = zero(T)
+    max_dist = zero(eltype(a))
     max_i, max_j = 1, 1
-    n = size(a, 2)
+    n = size(a, d)
     @inbounds for j in 1:n
-        aj = view(a, :, j)
+        aj = selectdim(a, d, j)
         for i in (j+1):n
-            ai = view(a, :, i)
+            ai = selectdim(a, d, i)
             dist = metric(ai, aj)
             if dist > max_dist
                 max_dist, max_i, max_j = dist, i, j

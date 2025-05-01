@@ -27,7 +27,7 @@ v_Alfven_map = "v.Alfven.change.l" => L"\Delta V_{A,l}"
 v_ion_map = "v.ion.change.l" => L"\Delta V_{i,l}"
 v_l_ratio_map = "v_l_ratio" => L"\Delta V_{i,l} / \Delta V_{A,l}"
 
-function var_mapping(; log_str="Log ")
+function var_mapping(; log_str="Log ", j=:j0_k)
 
     l_map = (;
         l=:L_n_cross => l_lab,
@@ -37,10 +37,10 @@ function var_mapping(; log_str="Log ")
     )
 
     j_map = (;
-        j=:j0_k => j_lab,
-        j_log=:j0_k => log10 => LaTeXString("$log_str$j_lab"),
-        j_norm=:j0_k_norm => j_norm_lab,
-        j_norm_log=:j0_k_norm => log10 => LaTeXString("$log_str$j_norm_lab"),
+        j=j => j_lab,
+        j_log=j => log10 => LaTeXString("$log_str$j_lab"),
+        j_norm=Symbol(j, :_norm) => j_norm_lab,
+        j_norm_log=Symbol(j, :_norm) => log10 => LaTeXString("$log_str$j_norm_lab"),
     )
 
     param_map = (;

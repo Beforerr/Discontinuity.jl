@@ -5,10 +5,6 @@ include("fit.jl")
 
 times(data) = DimensionalData.lookup(dims(data, TimeDim))
 
-"""Auto differentiation is used when `Enzyme` is available."""
-function _gradient end
-_gradient(fit::HyperbolicTangentFit, x) = fit.A / fit.σ * sech((x - fit.μ) / fit.σ)^2
-
 """
     fit_maximum_variance_direction(data, times)
 
@@ -17,7 +13,7 @@ Fit a hyperbolic tangent model to time-series in `data` and extract features
 function fit_maximum_variance_direction(data, times; model=tanh_model!, inplace=true)
     # Not enough points
     if length(data) < 4
-        return (t_fit=missing, fit_param=missing, grad=missing)
+        return (; t_fit=missing, fit_param=missing, grad=missing)
     end
 
     t0 = minimum(times)
@@ -53,6 +49,7 @@ function mva_features(data)
     eigen = mva_eigen(data)
     mva_data = rotate(data, eigen)
     B_l = view(mva_data, :, 1)
+    B_n = view(mva_data, :, 3)
     fit = fit_maximum_variance_direction(B_l)
     return (;
         B_lmn_before=parent(mva_data)[1, :],
@@ -60,7 +57,7 @@ function mva_features(data)
         λ2_over_λ3=eigen.values[2] / eigen.values[3],
         e_max=eigen.vectors[:, 1],
         n_mva=eigen.vectors[:, 3],
-        B_n=@views mean(mva_data[:, 3]),
+        B_n=mean(B_n),
         fit...
     )
 end

@@ -4,7 +4,7 @@ import Statistics: middle
 # https://github.com/JuliaStats/Statistics.jl/issues/47
 _middle(args...) = middle(args)
 _middle(t1::Dates.AbstractTime) = t1
-_middle(t1::T, t2::T) where T<:Dates.AbstractTime = T(round(Int, (t1 + t2).value / 2))
+_middle(t1::T, t2::T) where {T<:Dates.AbstractTime} = T(round(Int, (t1 + t2).value / 2))
 
 function diff_median(times)
     dts = diff(times)
@@ -36,7 +36,7 @@ end
 """
 Group `x` into windows based on `every` and `period`.
 """
-function groupby_dynamic(x::AbstractVector{T}, every, period=every, start_by=:window) where T
+function groupby_dynamic(x::AbstractVector{T}, every, period=every, start_by=:window) where {T}
     min = minimum(x)
     max = maximum(x)
     group_idx = Vector{UnitRange{Int}}()
@@ -84,11 +84,13 @@ dimtype_eltype(d) = (DimensionalData.basetypeof(d), eltype(d))
 dimtype_eltype(d, query) = dimtype_eltype(dims(d, query))
 
 function tview(da, t0, t1; query=TimeDim)
-    Dim, T = dimtype_eltype(da, query)
+    Dim, _T = dimtype_eltype(da, query)
+    T = nonmissingtype(_T)
     return @view da[Dim(T(t0) .. T(t1))]
 end
 
 function tview(da, t0; query=TimeDim, Selector=Near)
-    Dim, T = dimtype_eltype(da, query)
+    Dim, _T = dimtype_eltype(da, query)
+    T = nonmissingtype(_T)
     da[Dim(Selector(T(t0)))]
 end

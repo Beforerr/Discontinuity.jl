@@ -1,3 +1,6 @@
+"""Auto differentiation is used when `Enzyme` is available."""
+function _gradient end
+
 @. tanh_model(x, A, μ, σ, B) = A * tanh((x - μ) / σ) + B
 tanh_model!(y, x, A, μ, σ, B) = y .= tanh_model.(x, A, μ, σ, B)
 
@@ -20,7 +23,7 @@ struct HyperbolicTangentFit{T}
     B::T
 end
 
-HyperbolicTangentFit(p::AbstractArray{T}) where T = HyperbolicTangentFit{T}(p...)
+HyperbolicTangentFit(p::AbstractArray{T}) where {T} = HyperbolicTangentFit{T}(p...)
 
 (fit::HyperbolicTangentFit)(x) = tanh_model(x, fit.A, fit.μ, fit.σ, fit.B)
 

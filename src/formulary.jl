@@ -2,7 +2,7 @@ using Unitful
 using Unitful: μ0, Units, mp
 using Unitful: BField
 using PlasmaFormulary
-import PlasmaFormulary: plasma_beta, alfven_velocity, thermal_temperature, NumberDensity
+import PlasmaFormulary: plasma_beta, thermal_temperature, NumberDensity
 
 const DEFAULT_B_UNIT = u"nT"
 const DEFAULT_L_UNIT = u"km"
@@ -10,10 +10,18 @@ const DEFAULT_N_UNIT = u"cm^-3"
 const DEFAULT_V_UNIT = u"km/s"
 const V_UNIT = u"km/s"
 const DEFAULT_T_UNIT = u"eV"
+const QuantityLikeType = Union{Quantity,AbstractArray{<:Quantity}}
+
+_unitify_b(x) = safeunitize(x, DEFAULT_B_UNIT)
+_unitify_n(x) = safeunitize(x, DEFAULT_N_UNIT)
+_unitify_V(x) = safeunitize(x, DEFAULT_V_UNIT)
+_unitify_T(x) = safeunitize(x, DEFAULT_T_UNIT)
 
 function Alfven_speed(B::BField, n::NumberDensity)
     return B / sqrt(μ0 * n * mp) |> upreferred
 end
+
+Alfven_speed(B, n) = Alfven_speed(_unitify_b(B), _unitify_n(n))
 
 function gradient_current(dBdt, V)
     return dBdt / (V * μ0) |> upreferred
@@ -22,10 +30,15 @@ end
 gradient_current(dBdt::Unitful.Frequency, V) =
     gradient_current(dBdt * DEFAULT_B_UNIT, V)
 
-PlasmaFormulary.plasma_beta(T::Real, n::Real, B::Real) = plasma_beta(T * DEFAULT_T_UNIT, n * DEFAULT_N_UNIT, B * DEFAULT_B_UNIT) |> NoUnits
-PlasmaFormulary.alfven_velocity(B::Real, n::Real) = alfven_velocity(B * DEFAULT_B_UNIT, n * DEFAULT_N_UNIT) / DEFAULT_V_UNIT |> NoUnits
+plasma_beta(T::Real, n::Real, B::Real) = PlasmaFormulary.plasma_beta(_unitify_T(T), _unitify_n(n), _unitify_b(B)) |> NoUnits
 PlasmaFormulary.thermal_temperature(V::Real, mass=Unitful.mp) = thermal_temperature(V * DEFAULT_V_UNIT, mass)
 
+for f in (:alfven_velocity, :inertial_length)
+    @eval $f(args::Vararg{QuantityLikeType}) = PlasmaFormulary.$f(args...)
+end
+
+alfven_velocity(B, n) = alfven_velocity(_unitify_b(B), _unitify_n(n))
+inertial_length(n::Real, q, m) = inertial_length(_unitify_n(n), q, m)
 
 function Alfven_current(B, n)
     return upreferred(Alfven_speed(B, n) * n * Unitful.q)
@@ -36,9 +49,7 @@ end
 
 Convert the input data `x` to the specified `unit` if `x` does not have the unit.
 """
-safeunitize(x, unit) = x
-safeunitize(x::Real, unit) = x * unit
-safeunitize(x::AbstractArray, unit) = safeunitize.(x, unit)
+safeunitize(x, unit) = eltype(x) <: Real ? x * unit : x
 
 unitize(unit::Units) = f -> safeunitize(f, unit)
 
