@@ -5,14 +5,15 @@ include("fit.jl")
 
 times(data) = DimensionalData.lookup(dims(data, TimeDim))
 
-function init_p0(data, xdata)
+function init_p0(data, xdata; σ_min=1)
     x_min, x_max = 0, maximum(xdata)
     A0 = (data[end] - data[1]) / 2
     B0 = (data[end] + data[1]) / 2
-    μ0 = x_min + (x_max - x_min) / 2
-    σ0 = (x_max - x_min) / 7
+    μ0 = xdata[argmin(@. abs(data - B0))]
+    # σ0 = (x_max - x_min) / 7
+    σ0 = min(x_max - μ0, μ0 - x_min)
     p0 = [A0, μ0, σ0, B0]
-    lb = SA[-2abs(A0), x_min, 0.0, B0-abs(A0)]
+    lb = SA[-2abs(A0), x_min, σ_min, B0-abs(A0)]
     ub = SA[2abs(A0), x_max, Inf, B0+abs(A0)]
     return (p0, lb, ub)
 end
