@@ -105,7 +105,9 @@ Keyword arguments:
 - `fluc_threshold=1`: Threshold for index fluctuation
 - `diff_threshold=0.1`: Threshold for difference
 """
-function detect_variance(data, times, period, sparse_num, d; n=2, std_threshold=2, fluc_threshold=1, diff_threshold=0.1)
+function detect_variance(data, times, period, d::Val; sparse_num=nothing, n=2, std_threshold=2, fluc_threshold=1, diff_threshold=0.1)
+    sparse_num = @something sparse_num ceil(Int, period / time_resolution(times) / 3)
+
     every = period / n
     group_idx, tstart = groupby_dynamic(times, every, period)
     len = @. UInt16(length(group_idx))
@@ -135,20 +137,11 @@ function detect_variance(data, times, period, sparse_num, d; n=2, std_threshold=
     end
 end
 
-function detect_variance(data::AbstractDimArray, period, sparse_num, ::Val{dim}; kwargs...) where dim
-    d = Val(dimnum(data, dim))
-    times = parent(DimensionalData.lookup(dims(data, dim)))
-    detect_variance(parent(data), times, period, sparse_num, d; kwargs...)
+function detect_variance(A::AbstractDimArray, period, dim=Ti; kwargs...)
+    d = Val(dimnum(A, dim))
+    times = parent(DimensionalData.lookup(dims(A, dim)))
+    # https://github.com/brenhinkeller/NaNStatistics.jl/issues/55
+    # ustrip first provides a performance boost
+    data = eltype(A) <: Quantity ? ustrip(parent(A)) : parent(A)
+    detect_variance(data, times, period, d; kwargs...)
 end
-
-function detect_variance(data, period; n=2, dim=Ti, sparse_num=nothing, kwargs...)
-    ts = time_resolution(data)
-    sparse_num = isnothing(sparse_num) ? ceil(Int, period / ts / 3) : sparse_num
-    detect_variance(data, period, sparse_num, Val(dim); n, kwargs...)
-end
-
-
-# https://github.com/brenhinkeller/NaNStatistics.jl/issues/55
-# ustrip first provides a performance boost
-detect_variance(data::AbstractArray{Q}, args...; kwargs...) where Q<:Quantity =
-    detect_variance(ustrip(data), args...; kwargs...)

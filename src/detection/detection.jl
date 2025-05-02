@@ -7,7 +7,7 @@ using Statistics
 using NaNStatistics
 using StaticArrays
 using OhMyThreads
-using ProgressMeter
+using ProgressMeter: @showprogress
 using Distances: pairwise, Euclidean
 
 export detect_variance

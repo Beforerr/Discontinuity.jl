@@ -51,9 +51,6 @@ end
 function process_events!(events, data, V, n; kwargs...)
     @chain begin
         process_events!(events, data, V; kwargs...)
-        @rtransform! @astable begin
-            n_t = only(tview(n, :time))
-            :n = n_t
-        end
+        @rtransform! :n = only(tview(n, :time))
     end
 end
