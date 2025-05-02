@@ -20,7 +20,6 @@ function process_events!(events, data; dist=Euclidean(), B_unit=DEFAULT_B_UNIT, 
             t_ds = :t_us_ds[2]
             data_us = SV3(tview(data, t_us))
             data_ds = SV3(tview(data, t_ds))
-            :duration = uconvert(u"s", t_ds - t_us)
             :n_cross = cross(data_us, data_ds)
             :ω = angle_between(data_us, data_ds)
         end
@@ -45,14 +44,6 @@ function process_events!(events, data, V; kwargs...)
             # :V_us = tview(tview(V, :tstart, t_us), t_us)
             # :V_ds = tview(tview(V, t_ds, :tstop), t_ds)
         end
-        @transform! @astable begin
-            :V_n_cross = sproj.(:V, :n_cross)
-            :V_n_mva = sproj.(:V, :n_mva)
-            :L_n_cross = @. upreferred(abs(:duration * :V_n_cross))
-            :L_n_mva = @. upreferred(abs(:duration * :V_n_mva))
-            :J_m_max_mva = @. abs(gradient_current(:grad, :V_n_mva))
-            :J_m_max_cross = @. abs(gradient_current(:grad, :V_n_cross))
-        end
     end
 end
 
@@ -63,13 +54,6 @@ function process_events!(events, data, V, n; kwargs...)
         @rtransform! @astable begin
             n_t = only(tview(n, :time))
             :n = n_t
-        end
-        @transform! @astable begin
-            :d_i = inertial_length.(:n, Unitful.q, Unitful.mp)
-            :V_A = Alfven_speed.(:B_mag, :n) # Alfven speed
-            :J_A = @. upreferred(:V_A * :n * Unitful.q)
-            :V_A_lmn_before = alfven_velocity.(:B_lmn_before, :n)
-            :V_A_lmn_after = alfven_velocity.(:B_lmn_after, :n)
         end
     end
 end

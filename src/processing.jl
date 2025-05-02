@@ -7,10 +7,10 @@ process!(df::AbstractDataFrame) = begin
     compute_Alfvenicity_params!
 end
 
-function compute_params!(df)
-    df = @chain df begin
+function compute_params!(df; l_unit=DEFAULT_L_UNIT, j_unit=DEFAULT_J_UNIT)
+    cols = names(df)
+    "dB" in cols && @chain df begin
         @rtransform!(
-            :dB_norm = norm(:dB),
             :ω = vector_angle(:"B.vec.before", :"B.vec.after"),
             :ω_in = vector_angle(:"B.vec.before"[1:2], :"B.vec.after"[1:2]),
         )
@@ -28,13 +28,38 @@ function compute_params!(df)
         )
     end
 
-    :"n_cross" in names(df) && @rtransform!(
-        df,
-        :θ_nk = vector_angle(:e_min, :n_cross),
-        :L_n_cross_norm = abs(:L_n_cross / :ion_inertial_length),
-    )
+    "V" in cols && @transform! df @astable begin
+        :V_mag = norm.(:V)
+        :V_n_cross = sproj.(:V, :n_cross)
+        :V_n_mva = sproj.(:V, :n_mva)
+        :J_m_max_mva = @. abs(gradient_current(:grad, :V_n_mva)) |> j_unit
+        :J_m_max_cross = @. abs(gradient_current(:grad, :V_n_cross)) |> j_unit
+        :L_n_cross = @. abs(:duration * :V_n_cross) |> l_unit
+        :L_n_mva = @. abs(:duration * :V_n_mva) |> l_unit
+    end
 
-    if "T.before" in names(df)
+    :"n_cross" in cols && @rtransform!(df, :θ_nk = vector_angle(:n_mva, :n_cross))
+
+    "n" in cols && @transform! df @astable begin
+        :n = _unitify_n.(:n)
+        :d_i = @. inertial_length(:n, Unitful.q, Unitful.mp) |> l_unit
+        :L_n_cross_norm = @. abs(:L_n_cross / :d_i)
+
+        :V_A = Alfven_speed.(:B_mag, :n) # Alfven speed
+        :J_A = @. upreferred(:V_A * :n * Unitful.q)
+        :V_A_lmn_before = alfven_velocity.(:B_lmn_before, :n)
+        :V_A_lmn_after = alfven_velocity.(:B_lmn_after, :n)
+        :J_m_max_mva_norm = NoUnits.(:J_m_max_mva ./ :J_A)
+        :J_m_max_cross_norm = NoUnits.(:J_m_max_cross ./ :J_A)
+    end
+
+    "T" in cols && @chain df begin
+        @transform! @astable begin
+            :β = plasma_beta.(:T, :n, :B_mag)
+        end
+    end
+
+    if "T.before" in cols
         @transform! df :"T.mean" = (:"T.before" .+ :"T.after") ./ 2
     end
     return df

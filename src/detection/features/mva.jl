@@ -1,11 +1,12 @@
 using LsqFit
+using LsqFit: rss
 using Statistics
 using Dates
 include("fit.jl")
 
 times(data) = DimensionalData.lookup(dims(data, TimeDim))
 
-function init_p0(data, xdata; σ_min=1)
+function init_p0(data, xdata; σ_min=0)
     x_min, x_max = 0, maximum(xdata)
     A0 = (data[end] - data[1]) / 2
     B0 = (data[end] + data[1]) / 2
@@ -26,7 +27,7 @@ Fit a hyperbolic tangent model to time-series in `data` and extract features
 function fit_maximum_variance_direction(data, times; model=tanh_model!, inplace=true)
     # Not enough points
     if length(data) < 4
-        return (; t_fit=missing, fit_param=missing, grad=missing)
+        return (; t_fit=missing, fit_param=missing, grad=missing, nrmsd=missing, duration=missing)
     end
 
     dt = Millisecond(1)
@@ -37,11 +38,18 @@ function fit_maximum_variance_direction(data, times; model=tanh_model!, inplace=
     fit = curve_fit(model, xdata, data, p0; lower=lb, upper=ub, inplace)
     p = fit.param
 
+    # Not enough points within 3σ range
+    σ_range = (p[2] - 3p[3], p[2] + 3p[3])
+    if count(x -> σ_range[1] < x < σ_range[2], xdata) < 3
+        return (; t_fit=missing, fit_param=missing, grad=missing, nrmsd=missing, duration=missing)
+    end
+
     μ = p[2]
     f = FitModel(model)(p)
-    grad = _gradient(f, μ) / uconvert(u"s", dt)
+    udt = uconvert(u"s", dt)
+    grad = _gradient(f, μ) / udt
     t_fit = t0 + Nanosecond(round(Int, μ * (dt / Nanosecond(1))))
-    return (; t_fit, fit_param=p, grad)
+    return (; t_fit, fit_param=p, grad, nrmsd=nrmsd(fit, data), duration=2p[3] * udt)
 end
 
 fit_maximum_variance_direction(data) = fit_maximum_variance_direction(parent(data), times(data))

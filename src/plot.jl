@@ -20,7 +20,7 @@ function plot_dist!(
 )
     spec = l * density(datalimits=datalimits) * visual
     return map(axs, maps) do ax, m
-        p = spec * mapping(Pair(m...))
+        p = spec * mapping(m)
         draw!(ax, p; axis=axis, draw_kwargs...)
     end
 end

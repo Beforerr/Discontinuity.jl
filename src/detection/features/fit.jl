@@ -34,3 +34,11 @@ end
 function _gradient(fit::HyperbolicTangentFit, x)
     return fit.A / fit.σ * sech((x - fit.μ) / fit.σ)^2
 end
+
+
+# normalized root mean squared deviation (NRMSD)
+function nrmsd(fit, data)
+    rmse = sqrt(rss(fit) / length(data))
+    amin, amax = extrema(data)
+    return rmse / (amax - amin)
+end

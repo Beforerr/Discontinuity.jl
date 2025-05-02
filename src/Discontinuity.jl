@@ -16,11 +16,11 @@ Unitful.preferunits(u"km")
 include("utils.jl")
 include("naming.jl")
 include("io.jl")
-include("processing.jl")
 include("mapping.jl")
 include("plot.jl")
 include("formulary.jl")
 include("detection/detection.jl")
+include("processing.jl")
 
 export DataSet
 export load, process!

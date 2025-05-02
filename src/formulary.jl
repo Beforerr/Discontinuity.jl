@@ -8,6 +8,7 @@ const DEFAULT_B_UNIT = u"nT"
 const DEFAULT_L_UNIT = u"km"
 const DEFAULT_N_UNIT = u"cm^-3"
 const DEFAULT_V_UNIT = u"km/s"
+const DEFAULT_J_UNIT = u"nA/m^2"
 const V_UNIT = u"km/s"
 const DEFAULT_T_UNIT = u"eV"
 const QuantityLikeType = Union{Quantity,AbstractArray{<:Quantity}}
@@ -30,15 +31,15 @@ end
 gradient_current(dBdt::Unitful.Frequency, V) =
     gradient_current(dBdt * DEFAULT_B_UNIT, V)
 
-plasma_beta(T::Real, n::Real, B::Real) = PlasmaFormulary.plasma_beta(_unitify_T(T), _unitify_n(n), _unitify_b(B)) |> NoUnits
 PlasmaFormulary.thermal_temperature(V::Real, mass=Unitful.mp) = thermal_temperature(V * DEFAULT_V_UNIT, mass)
 
-for f in (:alfven_velocity, :inertial_length)
+for f in (:alfven_velocity, :inertial_length, :plasma_beta)
     @eval $f(args::Vararg{QuantityLikeType}) = PlasmaFormulary.$f(args...)
 end
 
 alfven_velocity(B, n) = alfven_velocity(_unitify_b(B), _unitify_n(n))
 inertial_length(n::Real, q, m) = inertial_length(_unitify_n(n), q, m)
+plasma_beta(T, n, B) = plasma_beta(_unitify_T(T), _unitify_n(n), _unitify_b(B))
 
 function Alfven_current(B, n)
     return upreferred(Alfven_speed(B, n) * n * Unitful.q)

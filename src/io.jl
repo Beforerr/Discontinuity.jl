@@ -54,15 +54,17 @@ end
 Backwards compatibility for old column names
 """
 function backwards_comp!(df)
+    cols = names(df)
     # renaming
-    :"t.d_start" in names(df) && @rename!(df, :t_us = :"t.d_start")
-    :"t.d_end" in names(df) && @rename!(df, :t_ds = :"t.d_end")
-    :"Vl" in names(df) && @rename!(df, :e_max = :Vl)
-    :"Vn" in names(df) && @rename!(df, :e_min = :Vn)
-    :"V.before" in names(df) && @rename!(df, :V_us = :"V.before")
-    :"V.after" in names(df) && @rename!(df, :V_ds = :"V.after")
-    :"V.ion.before" in names(df) && @rename!(df, :V_us = :"V.ion.before")
-    :"V.ion.after" in names(df) && @rename!(df, :V_ds = :"V.ion.after")
+    :"t.d_start" in cols && @rename!(df, :t_us = :"t.d_start")
+    :"t.d_end" in cols && @rename!(df, :t_ds = :"t.d_end")
+    :"Vl" in cols && @rename!(df, :e_max = :Vl)
+    :"Vn" in cols && @rename!(df, :e_min = :Vn)
+    "e_min" in cols && @rename!(df, :e_min = :n_mva)
+    :"V.before" in cols && @rename!(df, :V_us = :"V.before")
+    :"V.after" in cols && @rename!(df, :V_ds = :"V.after")
+    :"V.ion.before" in cols && @rename!(df, :V_us = :"V.ion.before")
+    :"V.ion.after" in cols && @rename!(df, :V_ds = :"V.ion.after")
 end
 
 """
