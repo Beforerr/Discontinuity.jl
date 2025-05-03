@@ -40,45 +40,37 @@ function compute_params!(df; l_unit=DEFAULT_L_UNIT, j_unit=DEFAULT_J_UNIT)
             :dB_over_B = ((:"B.before" .- :"B.after") ./ :"B.mean"),
             :dn_over_n = ((:"n.before" .- :"n.after") ./ :"n.mean"),
         )
-        @transform!(
-            :j0_k = abs.(:j0_k),
-            :j0_k_norm = abs.(:j0_k ./ :j_Alfven),
-        )
     end
 
     "V" in cols && @transform! df @astable begin
         :V_mag = norm.(:V)
         :V_n_cross = sproj.(:V, :n_cross)
-        :V_n_mva = sproj.(:V, :n_mva)
-        :J_m_max_mva = @. abs(gradient_current(:grad, :V_n_mva)) |> j_unit
-        :J_m_max_cross = @. abs(gradient_current(:grad, :V_n_cross)) |> j_unit
         :L_n_cross = @. abs(:duration * :V_n_cross) |> l_unit
+        :J_m_max_cross = @. abs(gradient_current(:grad, :V_n_cross)) |> j_unit
+        :V_n_mva = sproj.(:V, :n_mva)
         :L_n_mva = @. abs(:duration * :V_n_mva) |> l_unit
+        :J_m_max_mva = @. abs(gradient_current(:grad, :V_n_mva)) |> j_unit
     end
 
     "n" in cols && @transform! df @astable begin
         :n = _unitify_n.(:n)
-        :d_i = @. inertial_length(:n, Unitful.q, Unitful.mp) |> l_unit
+        :d_i = @. inertial_length(:n) |> l_unit
+        :V_A = Alfven_speed.(:B_mag, :n) # Alfven speed
+        :J_A = @. upreferred(:V_A * :n * Unitful.q)
+
         :L_n_cross_norm = @. abs(:L_n_cross / :d_i)
         :L_n_mva_norm = @. abs(:L_n_mva / :d_i)
 
-        :V_A = Alfven_speed.(:B_mag, :n) # Alfven speed
-        :J_A = @. upreferred(:V_A * :n * Unitful.q)
         :V_A_lmn_before = alfven_velocity.(:B_lmn_before, :n)
         :V_A_lmn_after = alfven_velocity.(:B_lmn_after, :n)
         :J_m_max_mva_norm = NoUnits.(:J_m_max_mva ./ :J_A)
         :J_m_max_cross_norm = NoUnits.(:J_m_max_cross ./ :J_A)
     end
 
-    "T" in cols && @chain df begin
-        @transform! @astable begin
-            :β = plasma_beta.(:T, :n, :B_mag)
-        end
+    "T" in cols && @transform! df @astable begin
+        :β = plasma_beta.(:T, :n, :B_mag)
     end
-
-    if "T.before" in cols
-        @transform! df :"T.mean" = (:"T.before" .+ :"T.after") ./ 2
-    end
+    "T.before" in cols && @transform! df :"T.mean" = (:"T.before" .+ :"T.after") ./ 2
     return df
 end
 

@@ -1,49 +1,50 @@
 using Unitful
-using Unitful: μ0, Units, mp
-using Unitful: BField
+using Unitful: μ0, Units, mp, q
+using Unitful: BField, Length, Velocity, Temperature, Frequency
 using PlasmaFormulary
-import PlasmaFormulary: plasma_beta, thermal_temperature, NumberDensity
+import PlasmaFormulary: plasma_beta, NumberDensity, CurrentDensity
 
-const DEFAULT_B_UNIT = u"nT"
-const DEFAULT_L_UNIT = u"km"
-const DEFAULT_N_UNIT = u"cm^-3"
-const DEFAULT_V_UNIT = u"km/s"
-const DEFAULT_J_UNIT = u"nA/m^2"
+const qe = Unitful.q
+const B_UNIT = u"nT"
+const L_UNIT = u"km"
+const N_UNIT = u"cm^-3"
+const J_UNIT = u"nA/m^2"
 const V_UNIT = u"km/s"
-const DEFAULT_T_UNIT = u"eV"
+const T_UNIT = u"eV"
 const QuantityLikeType = Union{Quantity,AbstractArray{<:Quantity}}
 
-_unitify_b(x) = safeunitize(x, DEFAULT_B_UNIT)
-_unitify_n(x) = safeunitize(x, DEFAULT_N_UNIT)
-_unitify_V(x) = safeunitize(x, DEFAULT_V_UNIT)
-_unitify_T(x) = safeunitize(x, DEFAULT_T_UNIT)
+_unitify_L(x) = safeunitize(x, L_UNIT)
+_unitify_B(x) = safeunitize(x, B_UNIT)
+_unitify_n(x) = safeunitize(x, N_UNIT)
+_unitify_V(x) = safeunitize(x, V_UNIT)
+_unitify_T(x) = safeunitize(x, T_UNIT)
 
-function Alfven_speed(B::BField, n::NumberDensity)
-    return B / sqrt(μ0 * n * mp) |> upreferred
-end
+uless(x) = NoUnits(x)
+uless(x::NumberDensity) = NoUnits(x / N_UNIT)
+uless(x::CurrentDensity) = NoUnits(x / J_UNIT)
+uless(x::Length) = NoUnits(x / L_UNIT)
+uless(x::Velocity) = NoUnits(x / V_UNIT)
+uless(x::Temperature) = NoUnits(x / T_UNIT)
 
-Alfven_speed(B, n) = Alfven_speed(_unitify_b(B), _unitify_n(n))
 
 function gradient_current(dBdt, V)
     return dBdt / (V * μ0) |> upreferred
 end
 
-gradient_current(dBdt::Unitful.Frequency, V) =
-    gradient_current(dBdt * DEFAULT_B_UNIT, V)
+gradient_current(dBdt::Frequency, V) =
+    gradient_current(dBdt * B_UNIT, V)
 
-PlasmaFormulary.thermal_temperature(V::Real, mass=Unitful.mp) = thermal_temperature(V * DEFAULT_V_UNIT, mass)
-
-for f in (:alfven_velocity, :inertial_length, :plasma_beta)
+for f in (:alfven_velocity, :plasma_beta)
     @eval $f(args::Vararg{QuantityLikeType}) = PlasmaFormulary.$f(args...)
 end
 
-alfven_velocity(B, n) = alfven_velocity(_unitify_b(B), _unitify_n(n))
-inertial_length(n::Real, q, m) = inertial_length(_unitify_n(n), q, m)
-plasma_beta(T, n, B) = plasma_beta(_unitify_T(T), _unitify_n(n), _unitify_b(B))
+alfven_velocity(B, n) = alfven_velocity(_unitify_B(B), _unitify_n(n))
+plasma_beta(T, n, B) = plasma_beta(_unitify_T(T), _unitify_n(n), _unitify_B(B))
 
-function Alfven_current(B, n)
-    return upreferred(Alfven_speed(B, n) * n * Unitful.q)
-end
+inertial_length(n, q=qe, m=mp) = PlasmaFormulary.inertial_length(_unitify_n(n), q, m)
+thermal_temperature(V, mass=Unitful.mp) = PlasmaFormulary.thermal_temperature(_unitify_V(V), mass)
+Alfven_speed(B, n) = PlasmaFormulary.alfven_velocity(_unitify_B(B), _unitify_n(n))
+Alfven_current(B, n) = upreferred(Alfven_speed(B, n) * _unitify_n(n) * q)
 
 """
     safeunitize(x, unit)
@@ -54,10 +55,7 @@ safeunitize(x, unit) = eltype(x) <: Real ? x * unit : x
 
 unitize(unit::Units) = f -> safeunitize(f, unit)
 
-function unitize!(df, col, unit)
-    # check if the type of the column data is float
-    df[!, col] = safeunitize(df[:, col], unit)
-end
+unitize!(df, col, unit) = (df[!, col] = safeunitize(df[!, col], unit))
 
 function unitize!(
     df;
@@ -66,19 +64,14 @@ function unitize!(
     Vcols=[],
     Tcols=[DEFAULT_T_COL],
     Lcols=DEFAULT_L_COLS ∩ names(df),
-    B_unit=DEFAULT_B_UNIT,
-    n_unit=DEFAULT_N_UNIT,
-    V_unit=DEFAULT_V_UNIT,
-    T_unit=DEFAULT_T_UNIT,
-    L_unit=DEFAULT_L_UNIT,
 )
     transform!(
         df,
-        Bcols .=> unitize(B_unit),
-        ncols .=> unitize(n_unit),
-        Vcols .=> unitize(V_unit),
-        Tcols .=> unitize(T_unit),
-        Lcols .=> unitize(L_unit);
+        Bcols .=> _unitify_B,
+        ncols .=> _unitify_n,
+        Vcols .=> _unitify_V,
+        Tcols .=> _unitify_T,
+        Lcols .=> _unitify_L;
         renamecols=false
     )
 end
