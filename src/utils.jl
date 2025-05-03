@@ -22,4 +22,9 @@ function angle_between(v1, v2)
     return acosd(v1 ⋅ v2 / (norm(v1) * norm(v2)))
 end
 
+function angle_between_90(v1, v2)
+    θ = angle_between(v1, v2)
+    ifelse(θ > 90, 180 - θ, θ)
+end
+
 const vector_angle = angle_between

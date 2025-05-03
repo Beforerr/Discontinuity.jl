@@ -7,6 +7,24 @@ process!(df::AbstractDataFrame) = begin
     compute_Alfvenicity_params!
 end
 
+"""the MVAB method can achieve acceptable accuracy when either |B|/|B| > 0.05 or ω > 60°. @liuFailuresMinimumVariance2023"""
+assign_mva_quality!(df) = @rtransform!(df, :mva_quality = (:ω > 60) | (:dBmag_over_Bmag > 0.05))
+function filter_low_mva_quality!(df)
+    "mva_quality" in names(df) || assign_mva_quality!(df)
+    filter!(:mva_quality => ==(true), df)
+end
+
+function compute_orientation_params!(df)
+    @chain df begin
+        assign_mva_quality!
+        @rtransform! begin
+            :θ_mva_cross = angle_between_90(:n_mva, :n_cross)
+            :B_n_mva_norm = abs(:B_n_mva / ustrip(:B_mag))
+            :B_n_cross_norm = abs(:B_n_cross / ustrip(:B_mag))
+        end
+    end
+end
+
 function compute_params!(df; l_unit=DEFAULT_L_UNIT, j_unit=DEFAULT_J_UNIT)
     cols = names(df)
     "dB" in cols && @chain df begin
@@ -38,12 +56,11 @@ function compute_params!(df; l_unit=DEFAULT_L_UNIT, j_unit=DEFAULT_J_UNIT)
         :L_n_mva = @. abs(:duration * :V_n_mva) |> l_unit
     end
 
-    :"n_cross" in cols && @rtransform!(df, :θ_nk = vector_angle(:n_mva, :n_cross))
-
     "n" in cols && @transform! df @astable begin
         :n = _unitify_n.(:n)
         :d_i = @. inertial_length(:n, Unitful.q, Unitful.mp) |> l_unit
         :L_n_cross_norm = @. abs(:L_n_cross / :d_i)
+        :L_n_mva_norm = @. abs(:L_n_mva / :d_i)
 
         :V_A = Alfven_speed.(:B_mag, :n) # Alfven speed
         :J_A = @. upreferred(:V_A * :n * Unitful.q)

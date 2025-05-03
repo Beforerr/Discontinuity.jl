@@ -12,24 +12,25 @@ function stat_features(data)
     return (; B_mag, dBmag_over_Bmag)
 end
 
+@views function cross_features(data)
+    data_us = SV3(data[1, :])
+    data_ds = SV3(data[end, :])
+    n_cross = normalize(cross(data_us, data_ds))
+    B_n_cross = sproj(nanmean(data, dims=1), n_cross)
+    ω = angle_between(data_us, data_ds)
+    return (; n_cross, B_n_cross, ω)
+end
+
 function process_events!(events, data; dist=Euclidean(), B_unit=DEFAULT_B_UNIT, kwargs...)
     @chain events begin
         @rtransform! :t_us_ds = ts_max_distance(tview(data, :tstart, :tstop); dist)
-        @rtransform! @astable begin
-            t_us = :t_us_ds[1]
-            t_ds = :t_us_ds[2]
-            data_us = SV3(tview(data, t_us))
-            data_ds = SV3(tview(data, t_ds))
-            :n_cross = cross(data_us, data_ds)
-            :ω = angle_between(data_us, data_ds)
-        end
+        @rtransform! $AsTable = cross_features(parent(tview(data, :t_us_ds...)))
         @rtransform! $AsTable = stat_features(tview(data, :t_us_ds...))
         @rtransform! $AsTable = mva_features(tview(data, :t_us_ds...))
         transform!(
             [:B_mag, :B_lmn_before, :B_lmn_after] .=> unitize(B_unit),
             renamecols=false
         )
-        @transform! :θ_mva_cross = angle_between.(:n_mva, :n_cross)
     end
 end
 

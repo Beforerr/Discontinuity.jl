@@ -70,7 +70,7 @@ function mva_features(data)
         λ2_over_λ3=eigen.values[2] / eigen.values[3],
         e_max=eigen.vectors[:, 1],
         n_mva=eigen.vectors[:, 3],
-        B_n=mean(B_n),
+        B_n_mva=mean(B_n),
         fit...
     )
 end
