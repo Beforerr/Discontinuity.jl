@@ -25,7 +25,7 @@ function compute_orientation_params!(df)
     end
 end
 
-function compute_params!(df; l_unit=DEFAULT_L_UNIT, j_unit=DEFAULT_J_UNIT)
+function compute_params!(df; l_unit=L_UNIT, j_unit=J_UNIT)
     cols = names(df)
     "dB" in cols && @chain df begin
         @rtransform!(

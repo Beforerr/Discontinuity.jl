@@ -1,6 +1,6 @@
 using Unitful
 using Unitful: μ0, Units, mp, q
-using Unitful: BField, Length, Velocity, Temperature, Frequency
+using Unitful: BField, Length, Velocity, Temperature, Frequency, Energy
 using PlasmaFormulary
 import PlasmaFormulary: plasma_beta, NumberDensity, CurrentDensity
 
@@ -11,6 +11,7 @@ const N_UNIT = u"cm^-3"
 const J_UNIT = u"nA/m^2"
 const V_UNIT = u"km/s"
 const T_UNIT = u"eV"
+const TE_UNIT = u"eV"
 const QuantityLikeType = Union{Quantity,AbstractArray{<:Quantity}}
 
 _unitify_L(x) = safeunitize(x, L_UNIT)
@@ -24,8 +25,8 @@ uless(x::NumberDensity) = NoUnits(x / N_UNIT)
 uless(x::CurrentDensity) = NoUnits(x / J_UNIT)
 uless(x::Length) = NoUnits(x / L_UNIT)
 uless(x::Velocity) = NoUnits(x / V_UNIT)
-uless(x::Temperature) = NoUnits(x / T_UNIT)
-
+uless(x::Temperature) = NoUnits(x * Unitful.k / TE_UNIT)
+uless(x::Energy) = NoUnits(x / TE_UNIT)
 
 function gradient_current(dBdt, V)
     return dBdt / (V * μ0) |> upreferred

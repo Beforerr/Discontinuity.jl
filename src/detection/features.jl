@@ -21,18 +21,19 @@ end
     return (; n_cross, B_n_cross, ω)
 end
 
-function process_events!(events, data; dist=Euclidean(), B_unit=DEFAULT_B_UNIT, kwargs...)
+function process_events!(events, data; dist=Euclidean(), kwargs...)
     @chain events begin
         @rtransform! :t_us_ds = ts_max_distance(tview(data, :tstart, :tstop); dist)
         @rtransform! $AsTable = cross_features(parent(tview(data, :t_us_ds...)))
         @rtransform! $AsTable = stat_features(tview(data, :t_us_ds...))
         @rtransform! $AsTable = mva_features(tview(data, :t_us_ds...))
-        transform!(
-            [:B_mag, :B_lmn_before, :B_lmn_after] .=> unitize(B_unit),
-            renamecols=false
-        )
     end
 end
+
+# transform!(
+# [:B_mag, :B_lmn_before, :B_lmn_after] .=> unitize(B_unit),
+# renamecols=false
+# )
 
 function process_events!(events, data, V; kwargs...)
     @chain begin

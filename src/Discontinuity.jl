@@ -21,6 +21,7 @@ include("plot.jl")
 include("formulary.jl")
 include("detection/detection.jl")
 include("processing.jl")
+include("products.jl")
 
 export DataSet
 export load, process!

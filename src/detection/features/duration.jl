@@ -4,8 +4,7 @@ function _argmax_pair(metric, a)
     return Tuple(max_idx)
 end
 
-function argmax_pair(metric, a, ::Val{d}=Val{2}()) where {
-    d}
+function argmax_pair(metric, a, ::Val{d}=Val{2}()) where {d}
     # Manually compute distances and track maximum
     max_dist = zero(eltype(a))
     max_i, max_j = 1, 1
