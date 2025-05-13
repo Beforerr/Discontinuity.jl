@@ -70,19 +70,21 @@ function compute_index_std!(df; std_threshold=2)
 end
 
 """Compute the difference index."""
-function diff_index(data, ::Val{n}) where {n}
+function diff_index(data, ::Val{n}, ::Val{dim}) where {n,dim}
     T = SVector{n}
-    slices = eachrow(data)
+    slices = eachslice(data; dims=dim)
     Δ = norm(T(first(slices)) - T(last(slices)))
     m = nanmean(norm.(T.(slices)))
     return Δ / m
 end
 
-function diff_index(data, group_idxs, ::Val{dim}) where {dim}
-    n = Val(size(data, 2))
+odim(dim) = (2, 1)[dim]
+
+function diff_index(data, group_idxs, vd::Val{dim}) where {dim}
+    n = Val(size(data, odim(dim)))
     return tmap(group_idxs) do group_idx
         window_data = selectdim(data, dim, group_idx)
-        diff_index(window_data, n)
+        diff_index(window_data, n, vd)
     end
 end
 
