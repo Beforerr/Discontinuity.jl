@@ -14,8 +14,8 @@ function init_p0(data, xdata; σ_min=0)
     # σ0 = (x_max - x_min) / 7
     σ0 = min(x_max - μ0, μ0 - x_min)
     p0 = [A0, μ0, σ0, B0]
-    lb = SA[-2abs(A0), x_min, σ_min, B0-abs(A0)]
-    ub = SA[2abs(A0), x_max, Inf, B0+abs(A0)]
+    lb = SA_F64[-2abs(A0), x_min, σ_min, B0-abs(A0)] # for `lmfit` keyword argument `lower`, expected AbstractVector{Float64}
+    ub = SA_F64[2abs(A0), x_max, Inf, B0+abs(A0)]
     return (p0, lb, ub)
 end
 
