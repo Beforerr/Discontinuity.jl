@@ -1,6 +1,6 @@
 using Unitful
 using Unitful: μ0, Units, mp, q
-using Unitful: BField, Length, Velocity, Temperature, Frequency, Energy
+using Unitful: BField, Velocity, Temperature, Frequency, Energy
 using PlasmaFormulary
 import PlasmaFormulary: plasma_beta, NumberDensity, CurrentDensity
 
@@ -23,7 +23,7 @@ _unitify_T(x) = safeunitize(x, T_UNIT)
 uless(x) = NoUnits(x)
 uless(x::NumberDensity) = NoUnits(x / N_UNIT)
 uless(x::CurrentDensity) = NoUnits(x / J_UNIT)
-uless(x::Length) = NoUnits(x / L_UNIT)
+uless(x::Unitful.Length) = NoUnits(x / L_UNIT)
 uless(x::Velocity) = NoUnits(x / V_UNIT)
 uless(x::Temperature) = NoUnits(x * Unitful.k / TE_UNIT)
 uless(x::Energy) = NoUnits(x / TE_UNIT)

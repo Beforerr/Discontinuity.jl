@@ -25,7 +25,7 @@ end
 
 Compute standard deviation over a rolling window.
 """
-function compute_std(data, group_idxs, ::Val{dim}) where dim
+function compute_std(data, group_idxs, ::Val{dim}) where {dim}
     return tmap(group_idxs) do group_idx
         window_data = selectdim(data, dim, group_idx)
         norm_std(window_data; dim)
@@ -37,7 +37,7 @@ end
 
 Compute combined standard deviation.
 """
-function compute_combined_std(data, idx1s, idx2s, ::Val{dim}) where dim
+function compute_combined_std(data, idx1s, idx2s, ::Val{dim}) where {dim}
     return tmap(idx1s, idx2s) do idx1, idx2
         # Slower but memory efficient
         # group_idx = ApplyVector(vcat, idx1, idx2)
@@ -70,7 +70,7 @@ function compute_index_std!(df; std_threshold=2)
 end
 
 """Compute the difference index."""
-function diff_index(data, ::Val{n}) where n
+function diff_index(data, ::Val{n}) where {n}
     T = SVector{n}
     slices = eachrow(data)
     Δ = norm(T(first(slices)) - T(last(slices)))
@@ -78,7 +78,7 @@ function diff_index(data, ::Val{n}) where n
     return Δ / m
 end
 
-function diff_index(data, group_idxs, ::Val{dim}) where dim
+function diff_index(data, group_idxs, ::Val{dim}) where {dim}
     n = Val(size(data, 2))
     return tmap(group_idxs) do group_idx
         window_data = selectdim(data, dim, group_idx)
