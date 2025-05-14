@@ -35,7 +35,15 @@ function fit_maximum_variance_direction(data, times; model=tanh_model!, inplace=
     xdata = @. (times - t0) / dt
 
     p0, lb, ub = init_p0(data, xdata)
-    fit = curve_fit(model, xdata, data, p0; lower=lb, upper=ub, inplace)
+
+    use_jacobian = false
+    fit = if use_jacobian
+        # 20% faster, less allocations but somehow use more memory
+        # TODO: add test
+        curve_fit(model, jacobian_tanh!, xdata, data, p0; lower=lb, upper=ub, inplace)
+    else
+        curve_fit(model, xdata, data, p0; lower=lb, upper=ub, inplace)
+    end
     p = fit.param
 
     # Not enough points within 3σ range

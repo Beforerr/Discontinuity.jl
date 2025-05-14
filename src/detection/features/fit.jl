@@ -4,6 +4,14 @@ function _gradient end
 @. tanh_model(x, A, μ, σ, B) = A * tanh((x - μ) / σ) + B
 tanh_model!(y, x, A, μ, σ, B) = y .= tanh_model.(x, A, μ, σ, B)
 
+function jacobian_tanh!(J, x, A, μ, σ, B)
+    @. J[:, 1] = tanh((x - μ) / σ)           # ∂f/∂A
+    @views @. J[:, 2] = -A / σ * (1 - J[:, 1]^2)  # ∂f/∂μ
+    @views @. J[:, 3] = -A * (x - μ) / σ^2 * (1 - J[:, 1]^2) # ∂f/∂σ
+    @. J[:, 4] = 1.0                               # ∂f/∂B
+end
+jacobian_tanh!(J, x, p) = jacobian_tanh!(J, x, p...)
+
 tanh_model!(y, x, p) = tanh_model!(y, x, p...)
 tanh_model(x, p) = tanh_model(x, p...)
 
