@@ -12,6 +12,10 @@ function init_p0(data, xdata; σ_min=0)
     B0 = (data[end] + data[1]) / 2
     μ0 = xdata[argmin(@. abs(data - B0))]
     # σ0 = (x_max - x_min) / 7
+    # handle edge case
+    if μ0 == x_min || μ0 == x_max
+        μ0 = (x_min + x_max) / 2
+    end
     σ0 = min(x_max - μ0, μ0 - x_min)
     p0 = [A0, μ0, σ0, B0]
     lb = SA_F64[-2abs(A0), x_min, σ_min, B0-abs(A0)] # for `lmfit` keyword argument `lower`, expected AbstractVector{Float64}
@@ -37,12 +41,16 @@ function fit_maximum_variance_direction(data, times; model=tanh_model!, inplace=
     p0, lb, ub = init_p0(data, xdata)
 
     use_jacobian = false
-    fit = if use_jacobian
-        # 20% faster, less allocations but somehow use more memory
-        # TODO: add test
-        curve_fit(model, jacobian_tanh!, xdata, data, p0; lower=lb, upper=ub, inplace)
-    else
-        curve_fit(model, xdata, data, p0; lower=lb, upper=ub, inplace)
+    fit = try
+        if use_jacobian
+            # 20% faster, less allocations but somehow use more memory
+            # TODO: add test
+            curve_fit(model, jacobian_tanh!, xdata, data, p0; lower=lb, upper=ub, inplace)
+        else
+            curve_fit(model, xdata, data, p0; lower=lb, upper=ub, inplace)
+        end
+    catch
+        error("fit_maximum_variance_direction failed, for time interval $(extrema(times))")
     end
     p = fit.param
 
@@ -60,7 +68,15 @@ function fit_maximum_variance_direction(data, times; model=tanh_model!, inplace=
     return (; t_fit, fit_param=p, grad, nrmsd=nrmsd(fit, data), duration=2p[3] * udt)
 end
 
-fit_maximum_variance_direction(data) = fit_maximum_variance_direction(parent(data), times(data))
+function dropna(da, query=Ti)
+    valid_idx = vec(all(!isnan, da; dims=otherdims(da, query)))
+    false in valid_idx ? da[query(valid_idx)] : da
+end
+
+function fit_maximum_variance_direction(data)
+    fdata = dropna(data)
+    fit_maximum_variance_direction(parent(fdata), times(fdata))
+end
 
 # https://github.com/JuliaNLSolvers/LsqFit.jl/pull/59
 # rsquared(data, model, fit) = cor(data, model(t, fit.param))^2
