@@ -56,7 +56,9 @@ Optional splitting into multiple chunks to improve performance and memory effici
 function ids_finder(fB, tmin, tmax, tau, args...; split=nothing, kwargs...)
     if isnothing(split)
         new_args = map(f -> f(tmin, tmax), args)
-        ids_finder(fB(tmin, tmax; add_unit=false), tau, new_args...; kwargs...)
+        data = fB(tmin, tmax; add_unit=false)
+        isnothing(data) && return DataFrame()
+        ids_finder(data, tau, new_args...; kwargs...)
     else
         tranges = split_range(tmin, tmax, split)
         @showprogress mapreduce(append!, tranges) do trange

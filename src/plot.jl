@@ -53,23 +53,31 @@ function waiting_time(time; δt=Dates.Minute(1))
     return τ ./ δt
 end
 
-waiting_time(df::AbstractDataFrame, col=:time; kwargs...) = waiting_time(df[:, col])
+waiting_time(df::AbstractDataFrame, col=:time; kwargs...) = waiting_time(df[!, col]; kwargs...)
+
+
+function plot_wt_pdf!(fp, τ;
+    dists=(Exponential,),
+    step=5,
+    xscale=identity,
+    yscale=log10,
+    add_legend=true,
+    legend_title="Distribution"
+)
+    ax = Axis(fp; yscale, xscale, xlabel="τ (minutes)", ylabel="p(τ)")
+    plot!(ax, DistsFit(τ, dists, step))
+    add_legend && axislegend(ax, legend_title; loc=:upperright)
+    return ax
+end
+
 
 """
 Plot the waiting time distribution of the data
 """
-function plot_wt_pdf(
-    τ;
-    dists=(Exponential,),
-    step=5,
-    xscale=identity
-)
+function plot_wt_pdf(τ; kwargs...)
     f = Figure()
-    ax = Axis(f[1, 1], yscale=log10, xscale=xscale, xlabel="τ (minutes)", ylabel="p(τ)")
-    plot!(ax, DistsFit(τ, dists, step))
-    # add the legend (fit parameters)
-    axislegend(ax, loc=:upperright)
-    return f
+    plot_wt_pdf!(f[1, 1], τ; kwargs...)
+    f
 end
 
 plot_wt_pdf(df::AbstractDataFrame; kwargs...) = plot_wt_pdf(waiting_time(df); kwargs...)
