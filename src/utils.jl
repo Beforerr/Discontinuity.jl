@@ -19,7 +19,8 @@ sproj(v1, v2) = v1 ⋅ v2 / norm(v2)
 
 """The angle between two vectors"""
 function angle_between(v1, v2)
-    return acosd(v1 ⋅ v2 / (norm(v1) * norm(v2)))
+    s = v1 ⋅ v2 / (norm(v1) * norm(v2))
+    return acosd(clamp(s, -1, 1))
 end
 
 function angle_between_90(v1, v2)

@@ -16,13 +16,13 @@ end
     data_us = SV3(data[1, :])
     data_ds = SV3(data[end, :])
     n_cross = normalize(cross(data_us, data_ds))
-    B_n_cross = sproj(nanmean(data, dims=1), n_cross)
+    B_n_cross = sproj(nanmean(data, dims = 1), n_cross)
     ω = angle_between(data_us, data_ds)
     return (; n_cross, B_n_cross, ω)
 end
 
-function process_events!(events, data; dist=Euclidean(), kwargs...)
-    @chain events begin
+function process_events!(events, data; dist = Euclidean(), kwargs...)
+    return @chain events begin
         @rtransform! :t_us_ds = ts_max_distance(tview(data, :tstart, :tstop); dist)
         @rtransform! $AsTable = cross_features(parent(tview(data, :t_us_ds...)))
         @rtransform! $AsTable = stat_features(tview(data, :t_us_ds...))
@@ -30,28 +30,30 @@ function process_events!(events, data; dist=Euclidean(), kwargs...)
     end
 end
 
-# transform!(
-# [:B_mag, :B_lmn_before, :B_lmn_after] .=> unitize(B_unit),
-# renamecols=false
-# )
+function process_events_V!(events, V, δt; verbose = false)
+    return @rtransform! events @astable begin
+        V_t = _unitify_V(parent(tview(V, :time)))
+        :V = V_t |> SV3
+        t_us, t_ds = :t_us_ds
+        Vs_us = tview(V, t_us - δt, t_us)
+        Vs_ds = tview(V, t_ds, t_ds + δt)
+        verbose && length(Vs_us) == 0 && @info "No upstream data between $(t_us - δt) and $t_us"
+        verbose && length(Vs_ds) == 0 && @info "No downstream data between $t_ds and $(t_ds + δt)"
+        :V_us = length(Vs_us) == 0 ? missing : SV3(tview(Vs_us, t_us))
+        :V_ds = length(Vs_ds) == 0 ? missing : SV3(tview(Vs_ds, t_ds))
+    end
+end
 
-function process_events!(events, data, V; kwargs...)
-    @chain begin
-        process_events!(events, data; kwargs...)
-        @rtransform! @astable begin
-            V_t = _unitify_V(parent(tview(V, :time)))
-            :V = V_t
-            # t_us = :t_us_ds[1]
-            # t_ds = :t_us_ds[2]
-            # :V_us = tview(tview(V, :tstart, t_us), t_us)
-            # :V_ds = tview(tview(V, t_ds, :tstop), t_ds)
-        end
+function process_events!(events, data, V; δt = Minute(1), kwargs...)
+    return @chain events begin
+        process_events!(_, data; kwargs...)
+        process_events_V!(_, V, δt)
     end
 end
 
 
 function process_events!(events, data, V, n; kwargs...)
-    @chain begin
+    return @chain begin
         process_events!(events, data, V; kwargs...)
         @rtransform! :n = only(tview(n, :time))
     end

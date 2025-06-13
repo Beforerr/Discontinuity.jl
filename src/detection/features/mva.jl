@@ -89,8 +89,8 @@ function mva_features(data)
     B_n = view(mva_data, :, 3)
     fit = fit_maximum_variance_direction(B_l)
     return (;
-        B_lmn_before=parent(mva_data)[1, :],
-        B_lmn_after=parent(mva_data)[end, :],
+        B_lmn_before=parent(mva_data)[1, :] |> SV3,
+        B_lmn_after=parent(mva_data)[end, :] |> SV3,
         λ2_over_λ3=eigen.values[2] / eigen.values[3],
         e_max=eigen.vectors[:, 1],
         n_mva=eigen.vectors[:, 3],

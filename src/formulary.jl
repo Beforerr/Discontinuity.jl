@@ -1,7 +1,7 @@
 using Unitful
 using Unitful: μ0, Units, mp, q
 using Unitful: BField, Velocity, Temperature, Frequency, Energy
-using PlasmaFormulary
+import PlasmaFormulary
 import PlasmaFormulary: plasma_beta, NumberDensity, CurrentDensity
 
 const qe = Unitful.q
@@ -35,16 +35,16 @@ end
 gradient_current(dBdt::Frequency, V) =
     gradient_current(dBdt * B_UNIT, V)
 
-for f in (:alfven_velocity, :plasma_beta)
+for f in (:Alfven_velocity, :plasma_beta)
     @eval $f(args::Vararg{QuantityLikeType}) = PlasmaFormulary.$f(args...)
 end
 
-alfven_velocity(B, n) = alfven_velocity(_unitify_B(B), _unitify_n(n))
+Alfven_velocity(B, n) = Alfven_velocity(_unitify_B(B), _unitify_n(n))
 plasma_beta(T, n, B) = plasma_beta(_unitify_T(T), _unitify_n(n), _unitify_B(B))
 
 inertial_length(n, q=qe, m=mp) = PlasmaFormulary.inertial_length(_unitify_n(n), q, m)
 thermal_temperature(V, mass=Unitful.mp) = PlasmaFormulary.thermal_temperature(_unitify_V(V), mass)
-Alfven_speed(B, n) = PlasmaFormulary.alfven_velocity(_unitify_B(B), _unitify_n(n))
+Alfven_speed(B, n) = PlasmaFormulary.Alfven_speed(_unitify_B(B), _unitify_n(n))
 Alfven_current(B, n) = upreferred(Alfven_speed(B, n) * _unitify_n(n) * q)
 
 """

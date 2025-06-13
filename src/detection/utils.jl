@@ -4,7 +4,7 @@ import Statistics: middle
 # https://github.com/JuliaStats/Statistics.jl/issues/47
 _middle(args...) = middle(args)
 _middle(t1::Dates.AbstractTime) = t1
-_middle(t1::T, t2::T) where {T<:Dates.AbstractTime} = T(round(Int, (t1 + t2).value / 2))
+_middle(t1::T, t2::T) where {T <: Dates.AbstractTime} = T(round(Int, (t1 + t2).value / 2))
 
 function diff_median(times)
     dts = diff(times)
@@ -16,27 +16,27 @@ function diff_median(times)
     if isodd(n)
         return _middle(partialsort!(dts, mid))
     else
-        m = partialsort!(dts, mid:mid+1)
+        m = partialsort!(dts, mid:(mid + 1))
         return _middle(m[1], m[2])
     end
 end
 
 """Get the time resolution of the times."""
-function time_resolution(times; N=6070)
+function time_resolution(times; N = 6070)
     n = length(times)
-    n > N ? diff_median(@view(times[1:N])) : diff_median(times)
+    return n > N ? diff_median(@view(times[1:N])) : diff_median(times)
 end
 
 function time_resolution(data::DimArray)
     time_dim = dims(data, TimeDim)
-    time_resolution(parent(time_dim.val))
+    return time_resolution(parent(time_dim.val))
 end
 
 # https://docs.pola.rs/api/python/stable/reference/dataframe/api/polars.DataFrame.group_by_dynamic.html
 """
 Group `x` into windows based on `every` and `period`.
 """
-function groupby_dynamic(x::AbstractVector{T}, every, period=every, start_by=:window) where {T}
+function groupby_dynamic(x::AbstractVector{T}, every, period = every, start_by = :window) where {T}
     min = minimum(x)
     max = maximum(x)
     group_idx = Vector{UnitRange{Int}}()
@@ -67,7 +67,7 @@ groupby_dynamic(x::Dimension, args...; kwargs...) =
 Split the range from `t0` to `t1` into `n` parts.
 """
 function split_range(t0, t1, n::Int)
-    if n <= 1
+    return if n <= 1
         ((t0, t1),)
     else
         dt = (t1 - t0) / n
@@ -77,20 +77,21 @@ end
 
 function split_range(t0, t1, dt)
     n = ceil(Int, (t1 - t0) / dt)
-    ((t0 + (i - 1) * dt, min(t0 + i * dt, t1)) for i in 1:n)
+    return ((t0 + (i - 1) * dt, min(t0 + i * dt, t1)) for i in 1:n)
 end
 
 dimtype_eltype(d) = (DimensionalData.basetypeof(d), eltype(d))
 dimtype_eltype(d, query) = dimtype_eltype(dims(d, query))
+dimtype_eltype(d, ::Nothing) = dimtype_eltype(dims(d, TimeDim))
 
-function tview(da, t0, t1; query=TimeDim)
+function tview(da, t0, t1; query = nothing)
     Dim, _T = dimtype_eltype(da, query)
     T = nonmissingtype(_T)
     return @view da[Dim(T(t0) .. T(t1))]
 end
 
-function tview(da, t0; query=TimeDim, Selector=Near)
+function tview(da, t0; query = nothing, Selector = Near)
     Dim, _T = dimtype_eltype(da, query)
     T = nonmissingtype(_T)
-    da[Dim(Selector(T(t0)))]
+    return da[Dim(Selector(T(t0)))]
 end

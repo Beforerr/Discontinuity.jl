@@ -11,12 +11,12 @@ end
 
 # This allocates temporary arrays but faster than the second option
 # See https://github.com/brenhinkeller/NaNStatistics.jl/issues/55
-norm_std(x; dim=1) = norm(nanstd(x; dims=(dim,)))
+norm_std(x; dim = 1) = norm(nanstd(x; dims = (dim,)))
 
 @views function norm_std(x, dim)
     ax = axes(x)
-    Ipre = CartesianIndices(ax[1:dim-1])
-    Ipost = CartesianIndices(ax[dim+1:end])
+    Ipre = CartesianIndices(ax[1:(dim - 1)])
+    Ipost = CartesianIndices(ax[(dim + 1):end])
     norm(nanstd(x[I1, :, I2]) for I1 in Ipre, I2 in Ipost)
 end
 
@@ -47,8 +47,8 @@ function compute_combined_std(data, idx1s, idx2s, ::Val{dim}) where {dim}
     end
 end
 
-function compute_index_fluctuation!(df, data, d; fluc_threshold=1)
-    @chain df begin
+function compute_index_fluctuation!(df, data, d; fluc_threshold = 1)
+    return @chain df begin
         @transform! :std_combined = compute_combined_std(data, :group_idx_prev, :group_idx_next, d)
         @transform! :index_fluctuation = @. :std_combined / (:std_prev + :std_next)
         @subset! :index_fluctuation .> fluc_threshold
@@ -62,7 +62,7 @@ Compute the standard deviation index based on the given data.
 
 First get the neighbor standard deviations.
 """
-function compute_index_std!(df; std_threshold=2)
+function compute_index_std!(df; std_threshold = 2)
     return @chain df begin
         @transform! :index_std = @. :std / max(:std_prev, :std_next)
         @subset! :index_std .> std_threshold
@@ -70,9 +70,9 @@ function compute_index_std!(df; std_threshold=2)
 end
 
 """Compute the difference index."""
-function diff_index(data, ::Val{n}, ::Val{dim}) where {n,dim}
+function diff_index(data, ::Val{n}, ::Val{dim}) where {n, dim}
     T = SVector{n}
-    slices = eachslice(data; dims=dim)
+    slices = eachslice(data; dims = dim)
     Δ = norm(T(first(slices)) - T(last(slices)))
     m = nanmean(norm.(T.(slices)))
     return Δ / m
@@ -88,8 +88,8 @@ function diff_index(data, group_idxs, vd::Val{dim}) where {dim}
     end
 end
 
-function compute_index_diff!(df, data, d; diff_threshold=0.1)
-    @chain df begin
+function compute_index_diff!(df, data, d; diff_threshold = 0.1)
+    return @chain df begin
         @transform!(:index_diff = diff_index(data, :group_idx, d))
         @subset!(:index_diff .> diff_threshold)
     end
@@ -107,7 +107,7 @@ Keyword arguments:
 - `fluc_threshold=1`: Threshold for index fluctuation
 - `diff_threshold=0.1`: Threshold for difference
 """
-function detect_variance(data, times, period, d::Val; sparse_num=nothing, n=2, std_threshold=2, fluc_threshold=1, diff_threshold=0.1)
+function detect_variance(data, times, period, d::Val; sparse_num = nothing, n = 2, std_threshold = 2, fluc_threshold = 1, diff_threshold = 0.1, clean = false)
     sparse_num = @something sparse_num ceil(Int, period / time_resolution(times) / 3)
 
     every = period / n
@@ -137,13 +137,19 @@ function detect_variance(data, times, period, d::Val; sparse_num=nothing, n=2, s
             :tstop = :tstart .+ period,
         )
     end
+
+    clean && select!(
+        df,
+        Not(:group_idx, :group_idx_prev, :group_idx_next, :len_prev, :len_next, :std_prev, :std_next)
+    )
+    return df
 end
 
-function detect_variance(A::AbstractDimArray, period, dim=Ti; kwargs...)
+function detect_variance(A::AbstractDimArray, period, dim = Ti; kwargs...)
     d = Val(dimnum(A, dim))
     times = parent(DimensionalData.lookup(dims(A, dim)))
     # https://github.com/brenhinkeller/NaNStatistics.jl/issues/55
     # ustrip first provides a performance boost
     data = eltype(A) <: Quantity ? ustrip(parent(A)) : parent(A)
-    detect_variance(data, times, period, d; kwargs...)
+    return detect_variance(data, times, period, d; kwargs...)
 end

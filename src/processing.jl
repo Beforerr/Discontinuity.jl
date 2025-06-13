@@ -1,21 +1,21 @@
 process!(df::AbstractDataFrame) = begin
     df |>
-    dropmissing |> # TODO: keep missing values
-    keep_good_fit! |>
-    standardize_df! |>
-    compute_params! |>
-    compute_Alfvenicity_params!
+        dropmissing |> # TODO: keep missing values
+        keep_good_fit! |>
+        standardize_df! |>
+        compute_params! |>
+        compute_Alfvenicity_params!
 end
 
 """the MVAB method can achieve acceptable accuracy when either |B|/|B| > 0.05 or ω > 60°. @liuFailuresMinimumVariance2023"""
 assign_mva_quality!(df) = @rtransform!(df, :mva_quality = (:ω > 60) | (:dBmag_over_Bmag > 0.05))
-function filter_low_mva_quality!(df)
+function filter_low_mva_quality(df; view = true)
     "mva_quality" in names(df) || assign_mva_quality!(df)
-    filter!(:mva_quality => ==(true), df)
+    return filter(:mva_quality => identity, df; view)
 end
 
 function compute_orientation_params!(df)
-    @chain df begin
+    return @chain df begin
         assign_mva_quality!
         @rtransform! begin
             :θ_mva_cross = angle_between_90(:n_mva, :n_cross)
@@ -25,21 +25,12 @@ function compute_orientation_params!(df)
     end
 end
 
-function compute_params!(df; l_unit=L_UNIT, j_unit=J_UNIT)
+function compute_params!(df; l_unit = L_UNIT, j_unit = J_UNIT)
     cols = names(df)
-    "dB" in cols && @chain df begin
-        @rtransform!(
-            :ω = vector_angle(:"B.vec.before", :"B.vec.after"),
-            :ω_in = vector_angle(:"B.vec.before"[1:2], :"B.vec.after"[1:2]),
-        )
-        @transform!(
-            :"B.mean" = (:"B.before" .+ :"B.after") ./ 2,
-            :"n.mean" = (:"n.before" .+ :"n.after") ./ 2,
-        )
-        @transform!(
-            :dB_over_B = ((:"B.before" .- :"B.after") ./ :"B.mean"),
-            :dn_over_n = ((:"n.before" .- :"n.after") ./ :"n.mean"),
-        )
+
+    @rtransform! df @astable begin
+        :ω = angle_between(:B_lmn_after, :B_lmn_before)
+        :ω_in = angle_between(:B_lmn_after[1:2], :B_lmn_before[1:2])
     end
 
     "V" in cols && @transform! df @astable begin
@@ -61,8 +52,8 @@ function compute_params!(df; l_unit=L_UNIT, j_unit=J_UNIT)
         :L_n_cross_norm = @. abs(:L_n_cross / :d_i)
         :L_n_mva_norm = @. abs(:L_n_mva / :d_i)
 
-        :V_A_lmn_before = alfven_velocity.(:B_lmn_before, :n)
-        :V_A_lmn_after = alfven_velocity.(:B_lmn_after, :n)
+        :V_A_lmn_before = Alfven_velocity.(:B_lmn_before, :n)
+        :V_A_lmn_after = Alfven_velocity.(:B_lmn_after, :n)
         :J_m_max_mva_norm = NoUnits.(:J_m_max_mva ./ :J_A)
         :J_m_max_cross_norm = NoUnits.(:J_m_max_cross ./ :J_A)
     end
@@ -71,20 +62,16 @@ function compute_params!(df; l_unit=L_UNIT, j_unit=J_UNIT)
         :β = plasma_beta.(:T, :n, :B_mag)
     end
     "T.before" in cols && @transform! df :"T.mean" = (:"T.before" .+ :"T.after") ./ 2
-    return df
+    return assign_mva_quality!(df)
 end
 
 function compute_Alfvenicity_params!(df)
     @chain df begin
         @rtransform!(
-            :V_us_l = sproj(:V_us, :e_max),
-            :V_ds_l = sproj(:V_ds, :e_max),
-            :B_us_l = sproj(:"B.vec.before", :e_max),
-            :B_ds_l = sproj(:"B.vec.after", :e_max)
-        )
-        @transform!(
-            :V_A_us_l = Alfven_velocity.(:B_us_l, :"n.before"),
-            :V_A_ds_l = Alfven_velocity.(:B_ds_l, :"n.after"),
+            :V_us_l = passmissing(sproj)(:V_us, :e_max),
+            :V_ds_l = passmissing(sproj)(:V_ds, :e_max),
+            :V_A_us_l = :V_A_lmn_before[1],
+            :V_A_ds_l = :V_A_lmn_after[1],
         )
         @transform!(
             :"v.Alfven.change.l" = abs.(:V_A_us_l .- :V_A_ds_l),
@@ -98,4 +85,27 @@ function compute_Alfvenicity_params!(df)
         @transform! df :v_l_fit_ratio = :"v.ion.change.l" ./ :"v.Alfven.change.l.fit"
     end
     return df
+end
+
+function compute_params_py!(df)
+    return "dB" in cols && @chain df begin
+        @rtransform!(
+            :ω = vector_angle(:"B.vec.before", :"B.vec.after"),
+            :ω_in = vector_angle(:"B.vec.before"[1:2], :"B.vec.after"[1:2]),
+        )
+        @transform!(
+            :"B.mean" = (:"B.before" .+ :"B.after") ./ 2,
+            :"n.mean" = (:"n.before" .+ :"n.after") ./ 2,
+        )
+        @transform!(
+            :dB_over_B = ((:"B.before" .- :"B.after") ./ :"B.mean"),
+            :dn_over_n = ((:"n.before" .- :"n.after") ./ :"n.mean"),
+        )
+        @rtransform!(
+            :V_us_l = sproj(:V_us, :e_max),
+            :V_ds_l = sproj(:V_ds, :e_max),
+            :B_us_l = sproj(:"B.vec.before", :e_max),
+            :B_ds_l = sproj(:"B.vec.after", :e_max)
+        )
+    end
 end
