@@ -2,7 +2,7 @@ A step-by-step guide to using the package
 
 ```{julia}
 using Speasy
-using Discontinuity: detect_variance
+using Discontinuity: detect_variance, ids_finder
 using Dates
 using DimensionalData
 
@@ -14,6 +14,9 @@ data = get_data("cda/WI_H2_MFI/BGSE", timerange) |> DimArray
 # Now we can detect discontinuities directly from the Speasy variable
 tau = Second(30)
 events = detect_variance(data, tau)
+# julia>  detect_variance(data, tau)
+# 4.246 ms (15471 allocs: 4.401 MiB)
+# 179
 ```
 
 ```{julia}

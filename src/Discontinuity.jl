@@ -27,5 +27,6 @@ export DataSet
 export load, process!
 export plot_dist, plot_wt_pdf
 export waiting_time
+export compute_anisotropy_params!
 
 end

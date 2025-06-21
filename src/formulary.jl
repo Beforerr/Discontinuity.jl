@@ -35,7 +35,7 @@ end
 gradient_current(dBdt::Frequency, V) =
     gradient_current(dBdt * B_UNIT, V)
 
-for f in (:Alfven_velocity, :plasma_beta)
+for f in (:Alfven_velocity, )
     @eval $f(args::Vararg{QuantityLikeType}) = PlasmaFormulary.$f(args...)
 end
 
@@ -81,7 +81,7 @@ function anisotropy(Bmag::BField, n, T_parp, T_perp)
     (μ0 * n * (T_parp - T_perp) / Bmag^2) |> NoUnits
 end
 
-anisotropy(Bmag::BField, n, T3; i=3) = anisotropy(Bmag, n, decompose_T3(T3, i)...)
+anisotropy(Bmag, n, T3; i=3) = anisotropy(Bmag, n, decompose_T3(T3, i)...)
 
 function decompose_T3(x, i)
     T_parp = x[i]
@@ -104,3 +104,12 @@ end
 function calc_T!(df, V; kwargs...)
     return @transform!(df, :T = passmissing(thermal_temperature).($V; kwargs...))
 end
+
+# Unitize the input arguments
+
+anisotropy(Bmag, n , T_parp, T_perp) = anisotropy(
+    _unitify_B(Bmag),
+    _unitify_n(n),
+    _unitify_T(T_parp),
+    _unitify_T(T_perp)
+)

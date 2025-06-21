@@ -52,8 +52,6 @@ function compute_params!(df; l_unit = L_UNIT, j_unit = J_UNIT)
         :L_n_cross_norm = @. abs(:L_n_cross / :d_i)
         :L_n_mva_norm = @. abs(:L_n_mva / :d_i)
 
-        :V_A_lmn_before = Alfven_velocity.(:B_lmn_before, :n)
-        :V_A_lmn_after = Alfven_velocity.(:B_lmn_after, :n)
         :J_m_max_mva_norm = NoUnits.(:J_m_max_mva ./ :J_A)
         :J_m_max_cross_norm = NoUnits.(:J_m_max_cross ./ :J_A)
     end
@@ -67,12 +65,14 @@ end
 
 function compute_Alfvenicity_params!(df)
     @chain df begin
-        @rtransform!(
-            :V_us_l = passmissing(sproj)(:V_us, :e_max),
-            :V_ds_l = passmissing(sproj)(:V_ds, :e_max),
-            :V_A_us_l = :V_A_lmn_before[1],
-            :V_A_ds_l = :V_A_lmn_after[1],
-        )
+        @rtransform! @astable begin
+            :V_A_lmn_before = Alfven_velocity(:B_lmn_before, :n)
+            :V_A_lmn_after = Alfven_velocity(:B_lmn_after, :n)
+            :V_us_l = passmissing(sproj)(:V_us, :e_max)
+            :V_ds_l = passmissing(sproj)(:V_ds, :e_max)
+            :V_A_us_l = :V_A_lmn_before[1]
+            :V_A_ds_l = :V_A_lmn_after[1]
+        end
         @transform!(
             :"v.Alfven.change.l" = abs.(:V_A_us_l .- :V_A_ds_l),
             :"v.ion.change.l" = abs.(:V_us_l .- :V_ds_l)
@@ -84,6 +84,30 @@ function compute_Alfvenicity_params!(df)
     if "v.Alfven.change.l.fit" in names(df)
         @transform! df :v_l_fit_ratio = :"v.ion.change.l" ./ :"v.Alfven.change.l.fit"
     end
+    return df
+end
+
+skipmissing_sum(args...) = all(ismissing, args) ? missing : sum(skipmissing(args))
+
+calc_v_l_ratio_Λ(v_l_ratio::T, Λ::Number) where {T} = (Λ > 1) ? T(NaN) : v_l_ratio / sqrt(1 - Λ)
+calc_v_l_ratio_Λ(v_l_ratio, Λ::Missing) = missing
+
+"""
+compute_anisotropy_params!(df, :ion => (:Tp_para, :Tp_perp), :electron => (:Te_para, :Te_perp))
+"""
+function compute_anisotropy_params!(df, T3s::Pair...)
+    Λ_ss = map(T3s) do (k, v)
+        Tpara = df[!, v[1]]
+        Tperp = df[!, v[2]]
+        Λ_sym = Symbol(:Λ_, k)
+        Λ_s = anisotropy.(df.B_mag, df.n, Tpara, Tperp)
+        df[!, Λ_sym] = Λ_s
+    end
+    Λ_all = map(skipmissing_sum, Λ_ss...)
+    if "v_l_ratio" in names(df)
+        @transform! df :v_l_ratio_Λ = calc_v_l_ratio_Λ.(:v_l_ratio, Λ_all)
+    end
+    df.Λ = Λ_all
     return df
 end
 
