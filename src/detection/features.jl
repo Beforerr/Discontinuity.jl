@@ -16,12 +16,17 @@ end
     data_us = SV3(data[1, :])
     data_ds = SV3(data[end, :])
     n_cross = normalize(cross(data_us, data_ds))
-    B_n_cross = sproj(nanmean(data, dims = 1), n_cross)
+    B_n_cross = sproj(nanmean(data, dims=1), n_cross)
     ω = angle_between(data_us, data_ds)
     return (; n_cross, B_n_cross, ω)
 end
 
-function process_events!(events, data; dist = Euclidean(), kwargs...)
+function span(x)
+    a, b = extrema(x)
+    return abs(b - a)
+end
+
+function process_events!(events, data; dist=Euclidean(), kwargs...)
     return @chain events begin
         @rtransform! :t_us_ds = ts_max_distance(tview(data, :tstart, :tstop); dist)
         @rtransform! $AsTable = cross_features(parent(tview(data, :t_us_ds...)))
@@ -30,11 +35,14 @@ function process_events!(events, data; dist = Euclidean(), kwargs...)
     end
 end
 
-function process_events_V!(events, V, δt; verbose = false)
+function process_events_V!(events, V, δt; verbose=false)
     return @rtransform! events @astable begin
-        V_t = _unitify_V(parent(tview(V, :time)))
-        :V = V_t |> SV3
         t_us, t_ds = :t_us_ds
+        V_subset = tview(V, t_us - δt, t_us + δt)
+        # calculate the largest change in the l direction
+        V_subset_l = sproj.(V_subset, :e_max)
+        :ΔV_l_max = span(V_subset_l)
+        :V = SV3(tview(V_subset, :time))
         Vs_us = tview(V, t_us - δt, t_us)
         Vs_ds = tview(V, t_ds, t_ds + δt)
         verbose && length(Vs_us) == 0 && @info "No upstream data between $(t_us - δt) and $t_us"
@@ -44,7 +52,7 @@ function process_events_V!(events, V, δt; verbose = false)
     end
 end
 
-function process_events!(events, data, V; δt = Minute(1), kwargs...)
+function process_events!(events, data, V; δt=Minute(1), kwargs...)
     return @chain events begin
         process_events!(_, data; kwargs...)
         process_events_V!(_, V, δt)

@@ -68,17 +68,14 @@ function compute_Alfvenicity_params!(df)
         @rtransform! @astable begin
             :V_A_lmn_before = Alfven_velocity(:B_lmn_before, :n)
             :V_A_lmn_after = Alfven_velocity(:B_lmn_after, :n)
-            :V_us_l = passmissing(sproj)(:V_us, :e_max)
-            :V_ds_l = passmissing(sproj)(:V_ds, :e_max)
-            :V_A_us_l = :V_A_lmn_before[1]
-            :V_A_ds_l = :V_A_lmn_after[1]
+            :ΔV_l = passmissing(sproj)((:V_us - :V_ds), :e_max)
+            :ΔVa_l = abs(:V_A_lmn_before[1] - :V_A_lmn_after[1])
         end
-        @transform!(
-            :"v.Alfven.change.l" = abs.(:V_A_us_l .- :V_A_ds_l),
-            :"v.ion.change.l" = abs.(:V_us_l .- :V_ds_l)
-        )
-        @transform! :v_l_ratio = :"v.ion.change.l" ./ :"v.Alfven.change.l"
-        @transform! :Λ_t = 1 .- :v_l_ratio .^ 2
+        @transform! @astable begin
+            :v_l_ratio = :ΔV_l ./ :ΔVa_l
+            :V_l_ratio_max = :ΔV_l_max ./ :ΔVa_l
+            :Λ_t = 1 .- :v_l_ratio .^ 2
+        end
     end
 
     if "v.Alfven.change.l.fit" in names(df)
