@@ -18,8 +18,8 @@ function init_p0(data, xdata; σ_min=0)
     end
     σ0 = min(x_max - μ0, μ0 - x_min)
     p0 = [A0, μ0, σ0, B0]
-    lb = SA_F64[-2abs(A0), x_min, σ_min, B0-abs(A0)] # for `lmfit` keyword argument `lower`, expected AbstractVector{Float64}
-    ub = SA_F64[2abs(A0), x_max, Inf, B0+abs(A0)]
+    lb = SA_F64[-1.25abs(A0), x_min, σ_min, B0-abs(A0)/3] # for `lmfit` keyword argument `lower`, expected AbstractVector{Float64}
+    ub = SA_F64[1.25abs(A0), x_max, Inf, B0+abs(A0)/3]
     return (p0, lb, ub)
 end
 
@@ -31,7 +31,7 @@ Fit a hyperbolic tangent model to time-series in `data` and extract features
 function fit_maximum_variance_direction(data, times; model=tanh_model!, inplace=true)
     # Not enough points
     if length(data) < 4
-        return (; t_fit=missing, fit_param=missing, grad=missing, nrmsd=missing, duration=missing)
+        return (; t_fit=missing, fit=missing, grad=missing, nrmsd=missing, duration=missing)
     end
 
     dt = Millisecond(1)
@@ -57,7 +57,7 @@ function fit_maximum_variance_direction(data, times; model=tanh_model!, inplace=
     # Not enough points within 3σ range
     σ_range = (p[2] - 3p[3], p[2] + 3p[3])
     if count(x -> σ_range[1] < x < σ_range[2], xdata) < 3
-        return (; t_fit=missing, fit_param=missing, grad=missing, nrmsd=missing, duration=missing)
+        return (; t_fit=missing, fit=missing, grad=missing, nrmsd=missing, duration=missing)
     end
 
     μ = p[2]
@@ -65,7 +65,7 @@ function fit_maximum_variance_direction(data, times; model=tanh_model!, inplace=
     udt = uconvert(u"s", dt)
     grad = _gradient(f, μ) / udt
     t_fit = t0 + Nanosecond(round(Int, μ * (dt / Nanosecond(1))))
-    return (; t_fit, fit_param=p, grad, nrmsd=nrmsd(fit, data), duration=2p[3] * udt)
+    return (; t_fit, fit=f, grad, nrmsd=nrmsd(fit, data), duration=2p[3] * udt)
 end
 
 function dropna(da, query=Ti)

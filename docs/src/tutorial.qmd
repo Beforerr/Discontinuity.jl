@@ -2,21 +2,33 @@ A step-by-step guide to using the package
 
 ```{julia}
 using Speasy
-using Discontinuity: detect_variance, ids_finder
+using Discontinuity
+using Discontinuity: detect_variance, ids_finder, mva, tview
+using Discontinuity.SPEDAS
 using Dates
 using DimensionalData
 
 timerange = ["2021-05-03", "2021-05-04"]
-data = get_data("cda/WI_H2_MFI/BGSE", timerange) |> DimArray
+# data = DimArray(get_data("cda/WI_H2_MFI/BGSE", timerange); add_unit=false)
+spz_var = "cda/PSP_FLD_L2_MAG_RTN_4_SA_PER_CYC/psp_fld_l2_mag_RTN_4_Sa_per_Cyc"
+data = DimArray(get_data(spz_var, ["2021-04-29", "2021-04-30"]); add_unit=false)
 ```
 
 ```{julia}
 # Now we can detect discontinuities directly from the Speasy variable
 tau = Second(30)
-events = detect_variance(data, tau)
+# events = detect_variance(data, tau)
+events = ids_finder(data, tau)
 # julia>  detect_variance(data, tau)
 # 4.246 ms (15471 allocs: 4.401 MiB)
 # 179
+```
+
+```{julia}
+using CairoMakie
+
+event = events[29, :]
+Discontinuity.plot_fit(data, event)
 ```
 
 ```{julia}

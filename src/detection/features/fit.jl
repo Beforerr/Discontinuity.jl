@@ -31,9 +31,10 @@ struct HyperbolicTangentFit{T}
     B::T
 end
 
-HyperbolicTangentFit(p::AbstractArray{T}) where {T} = HyperbolicTangentFit{T}(p...)
+HyperbolicTangentFit(p) = HyperbolicTangentFit(p...)
 
 (fit::HyperbolicTangentFit)(x) = tanh_model(x, fit.A, fit.μ, fit.σ, fit.B)
+(fit::HyperbolicTangentFit)(t, t0) = fit((t - t0) / Millisecond(1))
 
 for func in (:tanh_model, :tanh_model!)
     @eval FitModel(::typeof($func)) = HyperbolicTangentFit

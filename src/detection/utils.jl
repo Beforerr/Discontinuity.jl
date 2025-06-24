@@ -79,19 +79,3 @@ function split_range(t0, t1, dt)
     n = ceil(Int, (t1 - t0) / dt)
     return ((t0 + (i - 1) * dt, min(t0 + i * dt, t1)) for i in 1:n)
 end
-
-dimtype_eltype(d) = (DimensionalData.basetypeof(d), eltype(d))
-dimtype_eltype(d, query) = dimtype_eltype(dims(d, query))
-dimtype_eltype(d, ::Nothing) = dimtype_eltype(dims(d, TimeDim))
-
-function tview(da, t0, t1; query = nothing)
-    Dim, _T = dimtype_eltype(da, query)
-    T = nonmissingtype(_T)
-    return @view da[Dim(T(t0) .. T(t1))]
-end
-
-function tview(da, t0; query = nothing, Selector = Near)
-    Dim, _T = dimtype_eltype(da, query)
-    T = nonmissingtype(_T)
-    return da[Dim(Selector(T(t0)))]
-end
