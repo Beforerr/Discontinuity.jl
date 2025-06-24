@@ -1,4 +1,5 @@
 using SPEDAS: mva, mva_eigen, rotate
+using SPEDAS
 
 const SV3 = SVector{3}
 
@@ -28,17 +29,22 @@ end
 
 function process_events!(events, data; dist=Euclidean(), kwargs...)
     return @chain events begin
-        @rtransform! :t_us_ds = ts_max_distance(tview(data, :tstart, :tstop); dist)
-        @rtransform! $AsTable = cross_features(parent(tview(data, :t_us_ds...)))
-        @rtransform! $AsTable = stat_features(tview(data, :t_us_ds...))
-        @rtransform! $AsTable = mva_features(tview(data, :t_us_ds...))
+        @rtransform! @astable begin
+            t_us, t_ds = ts_max_distance(tview(data, :tstart, :tstop); dist)
+            :t_us = t_us
+            :t_ds = t_ds
+        end
+        remove_duplicates(_)
+        @rtransform! $AsTable = cross_features(parent(tview(data, :t_us, :t_ds)))
+        @rtransform! $AsTable = stat_features(tview(data, :t_us, :t_ds))
+        @rtransform! $AsTable = mva_features(tview(data, :t_us, :t_ds))
     end
 end
 
 function process_events_V!(events, V, δt; verbose=false)
     return @rtransform! events @astable begin
-        t_us, t_ds = :t_us_ds
-        V_subset = tview(V, t_us - δt, t_us + δt)
+        t_us, t_ds = :t_us, :t_ds
+        V_subset = tview(V, t_us - δt, t_ds + δt)
         # calculate the largest change in the l direction
         V_subset_l = sproj.(V_subset, :e_max)
         :ΔV_l_max = span(V_subset_l)

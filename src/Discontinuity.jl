@@ -2,8 +2,6 @@ module Discontinuity
 
 using DataFrames,
     DataFramesMeta
-using AlgebraOfGraphics,
-    Makie
 using LaTeXStrings
 using LinearAlgebra
 using Beforerr
@@ -25,8 +23,13 @@ include("products.jl")
 
 export DataSet
 export load, process!
-export plot_dist, plot_wt_pdf
+export plot_dist!, plot_dist, plot_wt_pdf
+export plot_fit!, plot_fit
 export waiting_time
 export compute_anisotropy_params!
 
+function plot_dist! end
+function plot_dist end
+function plot_fit! end
+function plot_fit end
 end

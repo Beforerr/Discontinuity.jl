@@ -68,7 +68,7 @@ function var_mapping(; log_str = "Log ", l = nothing, j = nothing, n = "n.mean",
 
         v_Alfven = "v.Alfven.change.l" => ustrip => L"$\Delta V_{A,l}$ ($\mathrm{km}\,\mathrm{s}^{-1}$)",
         v_ion = "v.ion.change.l" => ustrip => L"$\Delta V_{i,l}$ ($\mathrm{km}\,\mathrm{s}^{-1}$)",
-        v_l_ratio = :v_l_ratio => ustrip => L"\Delta V_{i,l} / \Delta V_{A,l}",
+        v_l_ratio = :V_l_ratio => ustrip => L"\Delta V_{i,l} / \Delta V_{A,l}",
     )
     return merge(l_map, j_map, param_map)
 end

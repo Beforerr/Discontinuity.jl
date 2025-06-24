@@ -72,9 +72,9 @@ function compute_Alfvenicity_params!(df)
             :ΔVa_l = abs(:V_A_lmn_before[1] - :V_A_lmn_after[1])
         end
         @transform! @astable begin
-            :v_l_ratio = :ΔV_l ./ :ΔVa_l
+            :V_l_ratio = :ΔV_l ./ :ΔVa_l
             :V_l_ratio_max = :ΔV_l_max ./ :ΔVa_l
-            :Λ_t = 1 .- :v_l_ratio .^ 2
+            :Λ_t = 1 .- :V_l_ratio .^ 2
         end
     end
 
@@ -101,8 +101,8 @@ function compute_anisotropy_params!(df, T3s::Pair...)
         df[!, Λ_sym] = Λ_s
     end
     Λ_all = map(skipmissing_sum, Λ_ss...)
-    if "v_l_ratio" in names(df)
-        @transform! df :v_l_ratio_Λ = calc_v_l_ratio_Λ.(:v_l_ratio, Λ_all)
+    if "V_l_ratio" in names(df)
+        @transform! df :V_l_ratio_Λ = calc_v_l_ratio_Λ.(:V_l_ratio, Λ_all)
     end
     df.Λ = Λ_all
     return df

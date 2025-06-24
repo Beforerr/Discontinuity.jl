@@ -36,13 +36,13 @@ Mark for deletion if either:
 1. Current row has same start/end time as previous row
 2. Current event starts before previous event ends (with this, checking 1 is redundant) 
 """
-function remove_duplicates(df)
+@views function remove_duplicates(df)
     sort!(df, :t_us) # Ensure proper time ordering
     mask = trues(nrow(df)) # Preallocate
+    t_us = df.t_us
+    t_ds = df.t_ds
     for i in 2:nrow(df) # Start from second row, compare with previous row
-        if df[i, :t_us] ≤ df[i-1, :t_ds]
-            mask[i] = false
-        end
+        mask[i] = t_us[i] > t_ds[i-1]
     end
     return df[mask, :]
 end
