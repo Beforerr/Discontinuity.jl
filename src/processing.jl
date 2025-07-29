@@ -68,12 +68,12 @@ function compute_Alfvenicity_params!(df)
         @rtransform! @astable begin
             :V_A_lmn_before = Alfven_velocity(:B_lmn_before, :n)
             :V_A_lmn_after = Alfven_velocity(:B_lmn_after, :n)
-            :ΔV_l = passmissing(sproj)((:V_us - :V_ds), :e_max)
+            :ΔV_l = passmissing((x, y, z) -> sproj(x - y, z))(:V_ds, :V_us, :e_max)
             :ΔVa_l = abs(:V_A_lmn_before[1] - :V_A_lmn_after[1])
         end
         @transform! @astable begin
-            :V_l_ratio = :ΔV_l ./ :ΔVa_l
-            :V_l_ratio_max = :ΔV_l_max ./ :ΔVa_l
+            :V_l_ratio = abs.(:ΔV_l ./ :ΔVa_l)
+            :V_l_ratio_max = abs.(:ΔV_l_max ./ :ΔVa_l)
             :Λ_t = 1 .- :V_l_ratio .^ 2
         end
     end
