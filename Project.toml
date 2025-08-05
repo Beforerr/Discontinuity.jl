@@ -5,7 +5,6 @@ version = "0.1.0"
 
 [deps]
 Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
-Beforerr = "49aed396-608e-4c3f-b6d6-a749216c9ea7"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
@@ -28,30 +27,35 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [weakdeps]
 AlgebraOfGraphics = "cbdf2221-f076-402e-a563-3d30da359d67"
+Beforerr = "49aed396-608e-4c3f-b6d6-a749216c9ea7"
 Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
 [extensions]
-DisEnzymeExt = "Enzyme"
 DisAlgebraOfGraphics = "AlgebraOfGraphics"
-DisMakie = "Makie"
-
-[sources]
-Beforerr = { url = "https://github.com/Beforerr/Beforerr.jl" }
+DisEnzymeExt = "Enzyme"
+DisMakie = ["Makie", "Beforerr"]
 
 [compat]
-AlgebraOfGraphics = "0.9, 0.10"
+AlgebraOfGraphics = "0.9, 0.10, 0.11"
 Arrow = "2"
+Beforerr = "0.1"
 DataFrames = "1"
+DataFramesMeta = "0.15"
+Dates = "1"
 DimensionalData = "0.29"
 Distances = "0.10"
+Distributions = "0.25"
 Enzyme = "0.13"
+FHist = "0.11"
 FileIO = "1"
 LaTeXStrings = "1"
+LinearAlgebra = "1"
 LsqFit = "0.15"
 Makie = "0.21, 0.22, 0.23, 0.24"
 NaNStatistics = "0.6"
 OhMyThreads = "0.8"
+PlasmaFormulary = "0.2"
 ProgressMeter = "1.10"
 SPEDAS = "0.1.4"
 StaticArrays = "1.9"

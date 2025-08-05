@@ -12,6 +12,7 @@ end
 # This allocates temporary arrays but faster than the second option
 # See https://github.com/brenhinkeller/NaNStatistics.jl/issues/55
 norm_std(x; dim = 1) = norm(nanstd(x; dims = (dim,)))
+norm_std(x::AbstractDimArray; dim = 1) = norm_std(parent(x); dim)
 
 @views function norm_std(x, dim)
     ax = axes(x)
@@ -78,8 +79,17 @@ function diff_index(data, ::Val{n}, ::Val{dim}) where {n, dim}
     return Δ / m
 end
 
+function diff_index(x::AbstractDimArray)
+    dim = dimnum(x, TimeDim)
+    slices = eachslice(x; dims = dim)
+    Δ = norm(first(slices) - last(slices))
+    m = nanmean(norm.(slices))
+    return Δ / m
+end
+
 odim(dim) = (2, 1)[dim]
 
+# TODO: remove this one
 function diff_index(data, group_idxs, vd::Val{dim}) where {dim}
     n = Val(size(data, odim(dim)))
     return tmap(group_idxs) do group_idx
@@ -91,6 +101,13 @@ end
 function compute_index_diff!(df, data, d; diff_threshold = 0.1)
     return @chain df begin
         @transform!(:index_diff = diff_index(data, :group_idx, d))
+        @subset!(:index_diff .> diff_threshold)
+    end
+end
+
+function compute_index_diff!(df, x::AbstractDimArray; diff_threshold = 0.1)
+    return @chain df begin
+        @rtransform!(:index_diff = diff_index(tview(x, :tstart, :tstop)))
         @subset!(:index_diff .> diff_threshold)
     end
 end

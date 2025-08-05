@@ -1,20 +1,16 @@
-using DataFrames, DataFramesMeta
-using DimensionalData
-using DimensionalData: dims, TimeDim
-using DimensionalData.Dimensions: Dimension
-using LinearAlgebra
-using Statistics
-using NaNStatistics
+using Statistics, NaNStatistics
 using StaticArrays
 using OhMyThreads
 using ProgressMeter: @showprogress
 using Distances: pairwise, Euclidean
+using SPEDAS.TimeseriesUtilities: other_dims, times
 
-export detect_variance
+export detect_variance, PVI
 export process_events!
 export ids_finder
 
 include("utils.jl")
+include("PVI.jl")
 include("variance.jl")
 include("features.jl")
 
@@ -27,7 +23,17 @@ Provide additional arguments `V` and `n` to calculate the features of the events
 """
 function ids_finder(data::AbstractArray, tau, args...; process = NamedTuple(), kwargs...)
     events = detect_variance(data, tau; kwargs...)
+    determine_boundary!(events, data)
     return process_events!(events, data, args...; process...)
+end
+
+function ids_finder_PVI(data::AbstractArray, args...; process = NamedTuple(), kwargs...)
+    PVI_ts = PVI(data; kwargs...)
+    cs_intervals = coherent_intervals(PVI_ts; gap = 1)
+    df = DataFrame(cs_intervals)
+    determine_boundary!(df, data)
+    select_current_sheets!(df, data; stability_threshold = 0.3, consistency_threshold = 0.8)
+    return process_events!(df, data, args...; process...)
 end
 
 for f in (:detect_variance,)

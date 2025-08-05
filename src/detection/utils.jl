@@ -79,3 +79,42 @@ function split_range(t0, t1, dt)
     n = ceil(Int, (t1 - t0) / dt)
     return ((t0 + (i - 1) * dt, min(t0 + i * dt, t1)) for i in 1:n)
 end
+
+
+"""
+    find_local_minimum(x, start_idx, direction, threshold)
+
+Find local minimum starting from `start_idx` in the given `direction` (-1 for backward, +1 for forward).
+First moves while above `threshold`, then continues below threshold until local minimum is found.
+"""
+function find_local_minimum(x, start_idx, direction, threshold)
+    idx = start_idx
+    min_val = x[idx]
+    min_idx = idx
+    n = length(x)
+    
+    # Helper function to check bounds
+    in_bounds = direction > 0 ? <=(n) : >=(1)
+    
+    # Move in direction while above threshold
+    while in_bounds(idx + direction) && x[idx] >= threshold
+        idx += direction
+        if x[idx] < min_val
+            min_val = x[idx]
+            min_idx = idx
+        end
+    end
+    
+    # Continue searching for local minimum below threshold
+    while in_bounds(idx + direction) && x[idx] < threshold
+        if x[idx] < min_val
+            min_val = x[idx]
+            min_idx = idx
+        elseif x[idx] > min_val  # Found local minimum
+            break
+        end
+        idx += direction
+    end
+    
+    return min_idx
+end

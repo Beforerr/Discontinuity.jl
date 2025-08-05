@@ -2,7 +2,7 @@ using Unitful
 using Unitful: μ0, Units, mp, q
 using Unitful: BField, Velocity, Temperature, Frequency, Energy
 import PlasmaFormulary
-import PlasmaFormulary: plasma_beta, NumberDensity, CurrentDensity
+import PlasmaFormulary: NumberDensity, CurrentDensity
 
 const qe = Unitful.q
 const B_UNIT = u"nT"
@@ -40,7 +40,7 @@ for f in (:Alfven_velocity, )
 end
 
 Alfven_velocity(B, n) = Alfven_velocity(_unitify_B(B), _unitify_n(n))
-plasma_beta(T, n, B) = plasma_beta(_unitify_T(T), _unitify_n(n), _unitify_B(B))
+plasma_beta(T, n, B) = PlasmaFormulary.plasma_beta(_unitify_T(T), _unitify_n(n), _unitify_B(B))
 
 inertial_length(n, q=qe, m=mp) = PlasmaFormulary.inertial_length(_unitify_n(n), q, m)
 thermal_temperature(V, mass=Unitful.mp) = PlasmaFormulary.thermal_temperature(_unitify_V(V), mass)
