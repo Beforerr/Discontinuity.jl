@@ -1,10 +1,16 @@
 [deps]
+AlgebraOfGraphics = "cbdf2221-f076-402e-a563-3d30da359d67"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DimensionalData = "0703355e-b756-11e9-17c0-8b28908087d0"
 Discontinuity = "b54b658d-ecbf-47cc-8c7f-673f5d2a4b30"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+FHist = "68837c9b-b678-4cd5-9925-8a54edc8f695"
 GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 PlasmaFormulary = "d26ff896-aba2-4e70-a0a6-448627456efe"
 Speasy = "09b745ad-c67d-442f-94a6-c7f4d1e4d861"
-WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
+TimeseriesUtilities = "31d49243-0742-49c1-b8d2-db113b74581e"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
+
+[sources]
+Discontinuity = { path = ".." }

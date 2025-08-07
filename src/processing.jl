@@ -1,3 +1,5 @@
+include("processing/Alfvenicity.jl")
+
 process!(df::AbstractDataFrame) = begin
     df |>
         dropmissing |> # TODO: keep missing values
@@ -29,7 +31,6 @@ function compute_params!(df; l_unit = L_UNIT, j_unit = J_UNIT)
     cols = names(df)
 
     @rtransform! df @astable begin
-        :ω = angle_between(:B_lmn_after, :B_lmn_before)
         :ω_in = angle_between(:B_lmn_after[1:2], :B_lmn_before[1:2])
     end
 
@@ -39,6 +40,7 @@ function compute_params!(df; l_unit = L_UNIT, j_unit = J_UNIT)
         :L_n_cross = @. abs(:duration * :V_n_cross) |> l_unit
         :J_m_max_cross = @. abs(gradient_current(:grad, :V_n_cross)) |> j_unit
         :V_n_mva = sproj.(:V, :n_mva)
+        :V_A_n_mva = Alfven_velocity.(:B_n_mva, :n)
         :L_n_mva = @. abs(:duration * :V_n_mva) |> l_unit
         :J_m_max_mva = @. abs(gradient_current(:grad, :V_n_mva)) |> j_unit
     end
@@ -61,27 +63,6 @@ function compute_params!(df; l_unit = L_UNIT, j_unit = J_UNIT)
     end
     "T.before" in cols && @transform! df :"T.mean" = (:"T.before" .+ :"T.after") ./ 2
     return assign_mva_quality!(df)
-end
-
-function compute_Alfvenicity_params!(df)
-    @chain df begin
-        @rtransform! @astable begin
-            :V_A_lmn_before = Alfven_velocity(:B_lmn_before, :n)
-            :V_A_lmn_after = Alfven_velocity(:B_lmn_after, :n)
-            :ΔV_l = passmissing((x, y, z) -> sproj(x - y, z))(:V_ds, :V_us, :e_max)
-            :ΔVa_l = abs(:V_A_lmn_before[1] - :V_A_lmn_after[1])
-        end
-        @transform! @astable begin
-            :V_l_ratio = abs.(:ΔV_l ./ :ΔVa_l)
-            :V_l_ratio_max = abs.(:ΔV_l_max ./ :ΔVa_l)
-            :Λ_t = 1 .- :V_l_ratio .^ 2
-        end
-    end
-
-    if "v.Alfven.change.l.fit" in names(df)
-        @transform! df :v_l_fit_ratio = :"v.ion.change.l" ./ :"v.Alfven.change.l.fit"
-    end
-    return df
 end
 
 skipmissing_sum(args...) = all(ismissing, args) ? missing : sum(skipmissing(args))
@@ -130,3 +111,12 @@ function compute_params_py!(df)
         )
     end
 end
+
+
+function waiting_time(time; δt=Dates.Minute(1))
+    # unique and order the time
+    τ = diff(time |> unique |> sort)
+    return τ ./ δt
+end
+
+waiting_time(df::AbstractDataFrame, col=:time; kwargs...) = waiting_time(df[!, col]; kwargs...)

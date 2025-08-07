@@ -6,7 +6,7 @@ function _argmax_pair(metric, a)
     return Tuple(max_idx)
 end
 
-function argmax_pair(metric, a, ::Val{d}=Val{2}()) where {d}
+function argmax_pair(metric, a, ::Val{d}) where {d}
     # Manually compute distances and track maximum
     max_dist = zero(eltype(a))
     max_i, max_j = 1, 1
@@ -29,12 +29,12 @@ end
 
 Compute the time interval when the timeseries has maximum cumulative variation.
 """
-function ts_max_distance(ts; query=TimeDim, dist=Euclidean(), penalty_factor=PENALTY_FACTOR[])
-    data = parent(ts)
-    times = dims(ts, query)
-    metric = time_penalized_metric(dist, times, penalty_factor)
-    i, j = argmax_pair(metric, PermutedDimsArray(data, (2, 1)))
-    return minmax(times[i], times[j])
+function ts_max_distance(ts; dist=Euclidean(), penalty_factor=PENALTY_FACTOR[])
+    t = times(ts)
+    dim = dimnum(ts, TimeDim)
+    metric = time_penalized_metric(dist, t, penalty_factor)
+    i, j = argmax_pair(metric, parent(ts), Val(dim))
+    return minmax(t[i], t[j])
 end
 
 """

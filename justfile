@@ -10,7 +10,7 @@ install:
     julia -e '
     using Pkg
     Pkg.develop([
-        PackageSpec(url="https://github.com/Beforerr/PlasmaFormulary.jl"),
+        PackageSpec(url="https://github.com/JuliaPlasma/PlasmaFormulary.jl"),
         PackageSpec(url="https://github.com/Beforerr/Beforerr.jl"),
         PackageSpec(path=pwd())
     ])

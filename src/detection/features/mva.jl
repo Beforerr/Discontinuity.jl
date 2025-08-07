@@ -4,8 +4,6 @@ using Statistics
 using Dates
 include("fit.jl")
 
-times(data) = DimensionalData.lookup(dims(data, TimeDim))
-
 function init_p0(data, xdata; σ_min=0)
     x_min, x_max = 0, maximum(xdata)
     A0 = (data[end] - data[1]) / 2
@@ -23,6 +21,7 @@ function init_p0(data, xdata; σ_min=0)
     return (p0, lb, ub)
 end
 
+# TODO: improve memory usage
 """
     fit_maximum_variance_direction(data, times)
 
@@ -92,6 +91,7 @@ function mva_features(data)
         B_lmn_before=parent(mva_data)[1, :] |> SV3,
         B_lmn_after=parent(mva_data)[end, :] |> SV3,
         λ2_over_λ3=eigen.values[2] / eigen.values[3],
+        eigenvectors = eigen.vectors,
         e_max=eigen.vectors[:, 1],
         n_mva=eigen.vectors[:, 3],
         B_n_mva=mean(B_n),
