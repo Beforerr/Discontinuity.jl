@@ -1,0 +1,122 @@
+A step-by-step guide to using the package
+
+```{julia}
+using Speasy
+using Discontinuity
+using Discontinuity: detect_variance, ids_finder, mva, tview
+using Discontinuity.SPEDAS
+using Dates
+using DimensionalData
+using DataFrames
+using GLMakie
+using TimeseriesUtilities
+using Unitful
+
+timerange = ["2021-05-03", "2021-05-04"]
+timerange = ["2018-11-01", "2018-11-02"]
+spz_var = "cda/WI_H2_MFI/BGSE"
+# spz_var = "cda/PSP_FLD_L2_MAG_RTN_4_SA_PER_CYC/psp_fld_l2_mag_RTN_4_Sa_per_Cyc"
+# spz_var = "cda/PSP_FLD_L2_MAG_RTN/psp_fld_l2_mag_RTN"
+B = DimArray(get_data(spz_var, timerange); add_unit=false)
+B_norm_combine = tnorm_combine(B)
+# data = tinterp(dropna(data), collect(time_grid(data, Millisecond(50)))) # https://github.com/rafaqz/DimensionalData.jl/issues/1060
+```
+
+```{julia}
+# Now we can detect discontinuities directly from the Speasy variable
+tau = Second(30)
+# events = detect_variance(data, tau)
+events = ids_finder(B, tau)
+# julia>  detect_variance(data, tau)
+# 4.246 ms (15471 allocs: 4.401 MiB)
+```
+
+
+## Identifying current sheets using different methods.
+
+Liu's variance method
+
+```{julia}
+Discontinuity.detect_variance(B, Second(30))
+```
+
+Partial variance of increment (PVI)
+
+```{julia}
+df = Discontinuity.ids_finder_PVI(B; every=Hour(2))
+```
+
+```{julia}
+row = rand(eachrow(df))
+display(row)
+f = Figure()
+tmin, tmax = row.t_us, row.t_ds
+@info tmax - tmin
+δt = Second(3)
+tplot(f[1:2, 1], (B_norm_combine, PVI_ts), tmin - δt, tmax + δt)
+ax = Axis(f[3, 1])
+Discontinuity.plot_B_mva!(ax, B, tmin, tmax, δt; idx=1:3)
+tlines!([row.tstart, row.tstop]; linestyle=:dash)
+
+f
+```
+
+```{julia}
+using CairoMakie
+
+event = events[28, :]
+Discontinuity.plot_fit(B, event)
+```
+
+
+## Current sheets' properties
+
+### Alfvénicity
+
+```{julia}
+V = DimArray(get_data("cda/WI_PM_3DP/P_VELS", timerange)) |> dropna
+n = DimArray(get_data("cda/WI_PM_3DP/P_DENS", timerange); add_unit=false) |> dropna
+process_events!(df, data, V, n)
+compute_Alfvenicity_params!(df)
+compute_params!(df)
+```
+
+```{julia}
+using AlgebraOfGraphics
+import AlgebraOfGraphics as AoG
+
+replace!(df.ΔV_θ, NaN => missing)
+df.Q_sonnerup = abs.(df.Q_sonnerup)
+
+plt = AoG.data(dropmissing(df)) *
+      AoG.mapping([:Q_sonnerup, :ΔV_ratio, :V_l_ratio, :ΔV_cosθ ] .=> "value"; color=AoG.dims(1)) *
+      AoG.histogram(Stairs; bins=100)
+draw(plt)
+```
+
+### Test influence of time resolution on PVI
+
+```{julia}
+using FHist
+
+f = Figure()
+ax = Axis(f[1, 1], xlabel="PVI", ylabel="Probability")
+
+spz_var = "cda/PSP_FLD_L2_MAG_RTN/psp_fld_l2_mag_RTN"
+data = DimArray(get_data(spz_var, timerange); add_unit=false) |> dropna
+
+PVI_ts = Discontinuity.PVI_deriv(data)
+h1 = Hist1D(PVI_ts; binedges=0:0.05:maximum(PVI_ts))
+stairs!(ax, normalize(h1))
+
+for dt in [Millisecond(50), Millisecond(100), Millisecond(250)]
+    PVI_ts = Discontinuity.PVI(tinterp(data, collect(time_grid(data, dt))); every=Hour(2))
+    hist = Hist1D(PVI_ts; binedges=0:0.05:maximum(PVI_ts))
+    stairs!(ax, normalize(hist); alpha=0.5, label=string(dt))
+end
+
+vlines!(1)
+xlims!(0, 5)
+axislegend(ax)
+f
+```
